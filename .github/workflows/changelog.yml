@@ -20,8 +20,22 @@ jobs:
         with:
           node-version: 18
 
+      # Cache Node.js modules to speed up subsequent builds
+      - name: Cache Node.js modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.npm
+            node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Clean npm cache
+        run: npm cache clean --force
+
       - name: Install dependencies
-        run: npm install -g @semantic-release/changelog @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/git
+        run: npm ci
 
       - name: Generate Changelog
         run: npx semantic-release --dry-run
