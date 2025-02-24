@@ -30,6 +30,8 @@ footers other than BREAKING CHANGE: <description> may be provided and follow a c
 
 **Note**: Only `fix`, `feat` and `BREAKING_CHANGE` will generate records on CHANGELOG.
 
+### Issue
+
 ### Branchs
 
 1. **PR**: Collaborators should work on their personal own branch, and then create a PR to merge into the main branch.
