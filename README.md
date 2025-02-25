@@ -10,6 +10,19 @@ TODO
 
 ## Rules
 
+### Branchs
+
+- main: main branch, latest stable version branch for release, fork, etc.
+- test: dev branch for development, intergration test, fork, etc.
+- personal branches: each member should have their own personal branch for development and merge them into test branch for testing.
+- release branches: each release should have its own branch for release, fork, etc.
+- temporary branches: temporarily opened and closed branches for bug fix, etc.
+
+main branch and release branches is protected, even administrators cannot push directly to main branch and release branches. Edit is to be done by PR.
+
+1. **PR**: Collaborators should work on their personal own branch, and then create a PR to merge into the main branch.
+2. **Auto CI**: On merge, Github Actions should automatically run the unit test. Collaborators should provide a description of how to run the unit test in ubuntu environment and how to get test report files.
+
 ### Commit
 
 On commit, please follow the [commit message convention](https://www.conventionalcommits.org/en/v1.0.0/) so that [Github Actions: Update Changelog](https://github.com/Hzeristo/se_project/actions/workflows/changelog.yml) can generate changelog automatically.
@@ -32,10 +45,6 @@ footers other than BREAKING CHANGE: <description> may be provided and follow a c
 
 ### Issue
 
-### Branchs
-
-1. **PR**: Collaborators should work on their personal own branch, and then create a PR to merge into the main branch.
-2. **Auto CI**: On merge, Github Actions should automatically run the unit test. Collaborators should provide a description of how to run the unit test in ubuntu environment and how to get test report files.
 
 ### Test
 
