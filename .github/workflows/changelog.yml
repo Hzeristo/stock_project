@@ -3,7 +3,7 @@ name: Update Changelog
 on:
   push:
     branches:
-      - main  # 仅在 main 分支推送时运行
+      - main
 
 jobs:
   update_changelog:
