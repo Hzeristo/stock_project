@@ -1,0 +1,33 @@
+name: Test on Merge to Branch Main
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize]
+
+jobs: 
+  check-pr-type:
+
+    runs-on: ubuntu-latest
+    outputs: 
+      run-tests: ${{ steps.check-type.outputs.run-tests }}
+    steps:
+      - name: Check PR Title
+        id: check-type
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          if [[ "$PR_TITLE" =~ ^(feat|fix|refactor|test|BREAKING_CHANGE) ]]; then
+            echo "run-tests=true" >> $GITHUB_ENV
+          else
+            echo "run-tests=false" >> $GITHUB_ENV
+          fi
+
+  run-tests:
+    needs: check-pr-type
+    if : ${{ needs.check-pr-type.outputs.run-tests == 'true' }}
+    runs-on: ubuntu-latest
+    steps: 
+      - name: test
+        run: |
+          echo "test not implemented yet"
