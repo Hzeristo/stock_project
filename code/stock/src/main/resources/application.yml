@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: ""
+    driver-class-name: ""
+    username: ""
+    password: ""
+  sql:
+    init:
+      mode: never

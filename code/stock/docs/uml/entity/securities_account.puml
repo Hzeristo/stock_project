@@ -1,0 +1,40 @@
+@startuml securities_account
+class SecuritiesAccount {
+    + id: Long
+    + accountNumber: String
+    + registrationDate: LocalDate
+    + name: String
+    + idCardNo: String
+    + phone: String
+    + address: String
+    + status: AccountStatus
+}
+
+class IndividualSecuritiesAccount {
+    + individualGender: String
+    + individualOccupation: String
+    + individualEducation: String
+    + individualEmployer: String
+}
+
+class CorporateSecuritiesAccount {
+    + corporationName: String
+    + registrationNumber: String
+    + businessLicenseNumber: String
+    + authorizedTraderName: String
+    + authorizedTraderIdCardNo: String
+    + authorizedTraderPhone: String
+    + authorizedTraderAddress: String
+}
+
+SecuritiesAccount <-- AccountStatus : "status"
+
+enum AccountStatus {
+    ACTIVE
+    SUSPENDED
+    CLOSED
+}
+
+SecuritiesAccount <|-- IndividualSecuritiesAccount
+SecuritiesAccount <|-- CorporateSecuritiesAccount
+@enduml

@@ -1,0 +1,36 @@
+@startuml capital_account
+
+class CapitalAccount {
+    + id: Long
+    + capitalAccountNumber: String
+    + type: CapitalAccountType
+    + balance: BigDecimal
+    + availableBalance: BigDecimal
+    + frozenBalance: BigDecimal
+    + currency: Currency
+    + bankName: String
+    + bankAccountNumber: String
+    + status: AccountStatus
+}
+
+enum CapitalAccountType {
+    TRADE
+    FUND
+}
+
+enum Currency {
+    CNY
+    USD
+}
+
+enum AccountStatus {
+    ACTIVE
+    SUSPENDED
+    CLOSED
+}
+
+CapitalAccount <-- CapitalAccountType : "type"
+CapitalAccount <-- AccountStatus : "status"
+CapitalAccount <-- Currency : "currency"
+
+@enduml 
