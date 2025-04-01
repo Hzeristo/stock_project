@@ -7,3 +7,9 @@ spring:
   sql:
     init:
       mode: never
+
+password:
+  bcrypt:
+    regex: ^\$(2[abyx])\$.*$
+  numeric:
+    regex: \d{6}

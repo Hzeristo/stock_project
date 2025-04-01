@@ -1,0 +1,12 @@
+{"properties": [
+  {
+    "name": "password.bcrypt.regex",
+    "type": "java.lang.String",
+    "description": "A description for 'password.bcrypt.regex'"
+  },
+  {
+    "name": "password.numeric.regex",
+    "type": "java.lang.String",
+    "description": "A description for 'password.numeric.regex'"
+  }
+]}

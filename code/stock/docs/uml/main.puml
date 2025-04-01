@@ -1,33 +1,45 @@
 @startuml main
 
 class SecuritiesAccount {
-    + id: Long
-    + accountNumber: String
-    + registrationDate: LocalDate
-    + name: String
-    + idCardNo: String
-    + phone: String
-    + address: String
+    - id: Long
+    - accountNumber: String
+    - registrationDate: LocalDate
+    - name: String
+    - idCardNo: String
+    - phone: String
+    - address: String
+    - status: AccountStatus
+    - capitalAccountIds: List<Long>
+    - positionId: Long
+    + getter()
+    + setter(values)
+    + toDto(): SecuritiesAccountDTO
 }
 
-class IndividualSecuritiesAccount {
-    + individualGender: String
-    + individualOccupation: String
-    + individualEducation: String
-    + individualEmployer: String
+class IndividualSecuritiesAccount extends SecuritiesAccount {
+    - individualGender: String
+    - individualOccupation: String
+    - individualEducation: String
+    - individualEmployer: String
+    + getter()
+    + setter(values)
+    + toDto(): IndividualSecuritiesAccountDTO
 }
 
-class CorporateSecuritiesAccount {
-    + corporationName: String
-    + registrationNumber: String
-    + businessLicenseNumber: String
-    + authorizedTraderName: String
-    + authorizedTraderIdCardNo: String
-    + authorizedTraderPhone: String
-    + authorizedTraderAddress: String
+class CorporateSecuritiesAccount extends SecuritiesAccount {
+    - corporationName: String
+    - registrationNumber: String
+    - businessLicenseNumber: String
+    - authorizedTraderName: String
+    - authorizedTraderIdCardNo: String
+    - authorizedTraderPhone: String
+    - authorizedTraderAddress: String
+    + getter()
+    + setter(values)
+    + toDto(): CorporateSecuritiesAccountDTO
 }
 
-SecuritiesAccount <-- AccountStatus : "status"
+SecuritiesAccount -- AccountStatus : "status"
 
 enum AccountStatus {
     ACTIVE
@@ -35,19 +47,21 @@ enum AccountStatus {
     CLOSED
 }
 
-SecuritiesAccount <|-- IndividualSecuritiesAccount
-SecuritiesAccount <|-- CorporateSecuritiesAccount
 class CapitalAccount {
-    + id: Long
-    + capitalAccountNumber: String
-    + type: CapitalAccountType
-    + balance: BigDecimal
-    + availableBalance: BigDecimal
-    + frozenBalance: BigDecimal
-    + currency: Currency
-    + bankName: String
-    + bankAccountNumber: String
-    + status: AccountStatus
+    - id: Long
+    - capitalAccountNumber: String
+    - type: CapitalAccountType
+    - balance: BigDecimal
+    - availableBalance: BigDecimal
+    - frozenBalance: BigDecimal
+    - currency: Currency
+    - bankName: String
+    - bankAccountNumber: String
+    - status: AccountStatus
+    - securitiesAccountId: Long
+    + getter()
+    + setter(values)
+    + toDTO(): CapitalAccountDTO
 }
 
 enum CapitalAccountType {
@@ -60,24 +74,27 @@ enum Currency {
     USD
 }
 
-CapitalAccount <-- CapitalAccountType : "type"
-CapitalAccount <-- AccountStatus : "status"
-CapitalAccount <-- Currency : "currency"
+CapitalAccount -- CapitalAccountType : "type"
+CapitalAccount -- AccountStatus : "status"
+CapitalAccount -- Currency : "currency"
 
-SecuritiesAccount <-- CapitalAccount : "1..*"
+SecuritiesAccount <-- CapitalAccount 
 
 
 class Order {
-    + id: Long
-    + accountId: Long
-    + stockCode: String
-    + orderType: OrderType
-    + orderQuantity: int
-    + orderPrice: BigDecimal
-    + orderValidity: OrderValidity
-    + orderKind: OrderKind
-    + orderStatus: OrderStatus
-    + orderTime: Timestamp
+    - id: Long
+    - accountId: Long
+    - stockCode: String
+    - orderType: OrderType
+    - orderQuantity: int
+    - orderPrice: BigDecimal
+    - orderValidity: OrderValidity
+    - orderKind: OrderKind
+    - orderStatus: OrderStatus
+    - orderTime: Timestamp
+    + getter()
+    + setter(values)
+    + toDTO(): TradeOrderDTO
 }
 
 enum OrderType {
@@ -103,53 +120,62 @@ enum OrderStatus {
     FAILED
 }
 
-Order <-- OrderType : "orderType"
-Order <-- OrderValidity : "orderValidity"
-Order <-- OrderKind : "orderKind"
-Order <-- OrderStatus : "orderStatus"
+Order -- OrderType : "orderType"
+Order -- OrderValidity : "orderValidity"
+Order -- OrderKind : "orderKind"
+Order -- OrderStatus : "orderStatus"
 
 Order --> SecuritiesAccount
 
 class Execution {
-    + id: Long
-    + orderId: Long
-    + securitiesAccountId: Long
-    + capitalAccountId: Long
-    + executionPrice: BigDecimal
-    + executionQuantity: int
-    + executionTime: Timestamp
+    - id: Long
+    - orderId: Long
+    - securitiesAccountId: Long
+    - capitalAccountId: Long
+    - executionPrice: BigDecimal
+    - executionQuantity: int
+    - executionTime: Timestamp
+    + getter()
+    + setter(values)
+    + toDTO(): TradeExecutionDTO
 }
 
-Order <-- Execution : "1..*"
+Order <-- Execution 
 
 Execution --> SecuritiesAccount
 Execution --> CapitalAccount
 
 class Stock {
-    + id: Long
-    + stockCode: String
-    + stockName: String
-    + exchange: Exchange
-    + fullName: String
-    + industry: String
-    + sector: String
-    + isin: String
-    + status: StockStatus
-    + businessScope: String
+    - id: Long
+    - stockCode: String
+    - stockName: String
+    - exchange: Exchange
+    - fullName: String
+    - industry: String
+    - sector: String
+    - isin: String
+    - status: StockStatus
+    - businessScope: String
+    + getter()
+    + setter(values)
+    + toDTO(): StockDTO
 }
-Order --> "1" Stock
+Order --> Stock
 
-class Holding {
-    + id: Long
-    + securitiesAccountId: Long
-    + stockId: Long
-    + quantity: int
-    + averageCost: BigDecimal
-    + lastUpdated: Timestamp
+class Position {
+    - id: Long
+    - securitiesAccountId: Long
+    - stockId: Long
+    - quantity: int
+    - averageCost: BigDecimal
+    - lastUpdated: Timestamp
+    + getter()
+    + setter(values)
+    + toDTO(): PostionDTO
 }
 
-Holding --> "1" Stock
+Position --> Stock
 
-Holding --> "1" SecuritiesAccount
+Position --> SecuritiesAccount
 
 @enduml
