@@ -2,7 +2,9 @@ package com.haydenshui.stock.capital.strategy;
 
 import java.util.Optional;
 
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.apache.seata.rm.tcc.api.BusinessActionContext;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 
 import com.haydenshui.stock.capital.CapitalAccountRepository;
@@ -10,13 +12,17 @@ import com.haydenshui.stock.lib.dto.capital.CapitalAccountDTO;
 import com.haydenshui.stock.lib.dto.capital.CapitalAccountTransactionDTO;
 import com.haydenshui.stock.lib.entity.account.CapitalAccount;
 import com.haydenshui.stock.lib.entity.account.CapitalAccountType;
+import com.haydenshui.stock.lib.exception.InvalidStrategyInvocationException;
 
 @Component
 public class FundAccountStrategy implements CapitalAccountStrategy {
 
+    private final MessageSource messageSource;
+
     private final CapitalAccountRepository capitalAccountRepository;
 
-    public FundAccountStrategy(CapitalAccountRepository capitalAccountRepository) {
+    public FundAccountStrategy(MessageSource messageSource, CapitalAccountRepository capitalAccountRepository) {
+        this.messageSource = messageSource;
         this.capitalAccountRepository = capitalAccountRepository;
     }
 
@@ -82,8 +88,11 @@ public class FundAccountStrategy implements CapitalAccountStrategy {
 
     @Override
     public boolean freezeAmount(BusinessActionContext context, CapitalAccountTransactionDTO dto) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'freezeAmount'");
+        throw new InvalidStrategyInvocationException(
+            this.getClass().getSimpleName(),
+            new Object(){}.getClass().getEnclosingMethod().getName(),
+            messageSource
+        );
     }
     
 }

@@ -47,6 +47,11 @@ public class PositionDTO {
     private boolean isFrozen = false;
 
     /**
+     * The number of shares currently frozen in this position.
+     */
+    private Integer frozenQuantity = 0; 
+
+    /**
      * The timestamp when the position was created.
      * This field stores the date and time when this position was created.
      */

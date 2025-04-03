@@ -9,20 +9,17 @@ import com.haydenshui.stock.trade.order.TradeOrderService;
 
 
 public class TradeService {
-    
-    private final RocketMQTemplate template;
 
     private final TradeOrderService tradeOrderService;
 
     private final TradeExecutionService tradeExecutionService;
 
-    public TradeService(RocketMQTemplate template, TradeOrderService tradeOrderService, TradeExecutionService tradeExecutionService) {
-        this.template = template;
+    public TradeService(TradeOrderService tradeOrderService, TradeExecutionService tradeExecutionService) {
         this.tradeOrderService = tradeOrderService;
         this.tradeExecutionService = tradeExecutionService;
     }
 
-    @GlobalTransactional
+    @GlobalTransactional(name = "tradeTransaction", rollbackFor = Exception.class)
     public void newTrade(TradeDTO tradeDTO) {
         //TODO: Auto generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'newTrade'");

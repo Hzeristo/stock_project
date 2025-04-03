@@ -8,6 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.haydenshui.stock.lib.annotation.NoTransactional;
 import com.haydenshui.stock.lib.dto.position.PositionDTO;
 import com.haydenshui.stock.lib.entity.position.Position;
 
@@ -26,6 +29,7 @@ public class PositionService {
 
     private static final Logger logger = LoggerFactory.getLogger(PositionService.class);
 
+    @Transactional
     public Optional<Position> createPosition(PositionDTO positionDTO) {
         //TODO: auto generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'createPosition'");
@@ -46,22 +50,26 @@ public class PositionService {
         throw new UnsupportedOperationException("Unimplemented method 'getPositionBySecuritiesAccountIdAndStockId'");
     }
 
+    @Transactional
     public Optional<Position> updatePosition(PositionDTO positionDTO) {
         //TODO: auto generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'updatePosition'");
     }
     
+    @NoTransactional
     @TwoPhaseBusinessAction(name = "tradeUpdatePosition", commitMethod = "commitTradeUpdatePosition", rollbackMethod = "rollbackTradeUpdatePosition")
     public boolean tradeUpdatePosition(BusinessActionContext context, @BusinessActionContextParameter("PositionDTO") PositionDTO positionDTO){
         //TODO: auto generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'tradeUpdatePosition'");
     }
 
+    @NoTransactional
     public boolean commitTradeUpdatePosition(BusinessActionContext context) {
         //TODO: auto generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'commitTradeUpdatePosition'");
     }
 
+    @NoTransactional
     public boolean rollbackTradeUpdatePosition(BusinessActionContext context) {
         //TODO: auto generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'rollbackTradeUpdatePosition'");

@@ -4,7 +4,7 @@ import com.haydenshui.stock.lib.dto.securities.CorporateSecuritiesAccountDTO;
 import com.haydenshui.stock.lib.entity.account.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.Optional;
 
@@ -14,9 +14,11 @@ public class CorporateSecuritiesAccountService implements SecuritiesAccountServi
     private static final Logger logger = LoggerFactory.getLogger(CorporateSecuritiesAccountService.class);
 
     private final CorporateSecuritiesAccountRepository repository;
+    private final PasswordEncoder passwordEncoder;
 
-    public CorporateSecuritiesAccountService(CorporateSecuritiesAccountRepository repository) {
+    public CorporateSecuritiesAccountService(CorporateSecuritiesAccountRepository repository, PasswordEncoder passwordEncoder) {
         this.repository = repository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override

@@ -3,6 +3,8 @@ package com.haydenshui.stock.trade.execution;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import com.haydenshui.stock.lib.dto.trade.TradeExecutionDTO;
 import com.haydenshui.stock.lib.entity.trade.TradeExecution;
 
@@ -14,6 +16,7 @@ public class TradeExecutionService {
         this.tradeExecutionRepostory = tradeExecutionRepostory;
     }
 
+    @Transactional
     public Optional<TradeExecution> createExecution(TradeExecutionDTO tradeExecutionDTO) {
         //TODO: Auto generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'createExecution'");
@@ -29,6 +32,7 @@ public class TradeExecutionService {
         throw new UnsupportedOperationException("Unimplemented method 'getExecutionByAccount'");
     }
 
+    @Transactional
     public Optional<TradeExecution> updateExecution(TradeExecutionDTO tradeExecutionDTO) {
         //TODO: Auto generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'updateExecution'");
