@@ -4,6 +4,9 @@ import lombok.*;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.haydenshui.stock.lib.entity.account.SecuritiesAccount;
 
 
 /**
@@ -18,7 +21,17 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class SecuritiesAccountDTO {
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME,         
+    include = JsonTypeInfo.As.PROPERTY, 
+    property = "type",                  
+    visible = true                      
+)
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = IndividualSecuritiesAccountDTO.class, name = "individual"),
+    @JsonSubTypes.Type(value = CorporateSecuritiesAccountDTO.class, name = "corporate")
+})
+public abstract class SecuritiesAccountDTO {
 
     /**
      * The unique identifier for the securities account.

@@ -37,6 +37,7 @@ public class SecuritiesMapper {
             individualSecuritiesAccount.setStatus(AccountStatus.fromString(individualSecuritiesAccountDTO.getStatus()));
         }
         return individualSecuritiesAccount;
+        //TODO: add logic to check createdAt and status
     }
 
     public static CorporateSecuritiesAccount toEntity(CorporateSecuritiesAccountDTO corporateSecuritiesAccountDTO) {
@@ -49,4 +50,5 @@ public class SecuritiesMapper {
         }
         return corporateSecuritiesAccount;
     }
+
 }

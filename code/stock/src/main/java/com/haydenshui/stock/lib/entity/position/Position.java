@@ -70,8 +70,8 @@ public class Position {
      * indicating the stock that is held within this position.
      * </p>
      */
-    @Column(name = "stock_id", nullable = false)
-    private Long stockId;
+    @Column(name = "stock_code", nullable = false)
+    private String stockCode;
 
     /**
      * The number of shares held in this position.

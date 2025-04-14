@@ -7,24 +7,24 @@ import java.util.Optional;
 
 public interface SecuritiesAccountService<T extends SecuritiesAccount, D extends SecuritiesAccountDTO> {
 
-    Optional<T> createAccount(D dto);
+    T createAccount(D dto);
 
-    Optional<T> getAccountById(Long id);
+    T getAccountById(Long id);
 
-    Optional<T> getAccountByAccountNumber(String accountNumber);
+    T getAccountByAccountNumber(String accountNumber);
 
-    Optional<T> getAccountByIdCardNo(String idCardNo);
+    T getAccountByIdCardNo(String idCardNo);
 
-    Optional<T> updateAccount(D dto);
+    T updateAccount(D dto);
 
-    Optional<T> updateAccount(T account);
+    T updateAccount(T account);
 
-    Optional<T> disableAccount(D dto);
+    T disableAccount(D dto);
 
-    Optional<T> disableAccount(T account);
+    T disableAccount(T account);
 
-    Optional<T> reportAccountLoss(D dto);
+    T reportAccountLoss(D dto);
 
-    Optional<T> restoreAccount(D dto);
+    T restoreAccount(D dto);
 
 }

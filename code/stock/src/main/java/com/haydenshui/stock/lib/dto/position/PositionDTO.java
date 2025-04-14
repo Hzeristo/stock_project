@@ -20,13 +20,13 @@ public class PositionDTO {
      * The ID of the associated securities account.
      * This field represents the ID of the account where this position is held.
      */
-    private Long securitiesAccountId;
+    private Long securitiesAccountId; 
 
     /**
      * The ID of the associated stock.
      * This field represents the ID of the stock within this position.
      */
-    private Long stockId;
+    private String stockCode;
 
     /**
      * The number of shares held in this position.

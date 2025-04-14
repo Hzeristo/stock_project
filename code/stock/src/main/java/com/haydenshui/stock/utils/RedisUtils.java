@@ -8,7 +8,7 @@ import jakarta.annotation.PostConstruct;
 import java.util.concurrent.TimeUnit;
 
 @Component
-public class RedisUtil {
+public class RedisUtils {
 
     private static StringRedisTemplate staticRedisTemplate;
 
