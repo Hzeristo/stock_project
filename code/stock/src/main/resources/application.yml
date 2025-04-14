@@ -55,8 +55,10 @@ rocketmq-config:
     trade: TRADE_TOPIC
     match: MATCH_TOPIC
     position: POSITION_TOPIC
+    capital: CAPITAL_TOPIC
 
   tags:
     trade-create: TRADE_CREATE
     trade-confirm: TRADE_CONFIRM
     trade-cancel: TRADE_CANCEL
+    capital-check: CAPITAL_CHECK

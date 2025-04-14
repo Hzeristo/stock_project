@@ -4,7 +4,6 @@ import org.springframework.beans.BeanUtils;
 
 import com.haydenshui.stock.lib.entity.position.Position;
 import com.haydenshui.stock.lib.entity.position.PositionChangeLog;
-import com.haydenshui.stock.utils.XidUtils;
 
 public class PositionMapper {
     
