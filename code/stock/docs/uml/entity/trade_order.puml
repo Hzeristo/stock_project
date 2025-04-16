@@ -1,0 +1,45 @@
+@startuml trade_order
+
+class Order {
+    + id: Long
+    + accountId: Long
+    + stockCode: String
+    + orderType: OrderType
+    + orderQuantity: int
+    + orderPrice: BigDecimal
+    + orderValidity: OrderValidity
+    + orderKind: OrderKind
+    + orderStatus: OrderStatus
+    + orderTime: Timestamp
+}
+
+enum OrderType {
+    BUY
+    SELL
+}
+
+enum OrderValidity {
+    DAY_ORDER
+}
+
+enum OrderKind {
+    LIMIT
+    MARKET
+    STOP
+}
+
+enum OrderStatus {
+    PENDING     
+    EXECUTED    
+    PARTIAL
+    CANCELED
+    FAILED
+}
+
+Order --> OrderType : "orderType"
+Order --> OrderValidity : "orderValidity"
+Order --> OrderKind : "orderKind"
+Order --> OrderStatus : "orderStatus"
+
+
+@enduml

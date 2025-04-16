@@ -1,0 +1,16 @@
+@startuml stock
+
+class Stock {
+    + id: Long
+    + stockCode: String
+    + stockName: String
+    + exchange: Exchange
+    + fullName: String
+    + industry: String
+    + sector: String
+    + isin: String
+    + status: StockStatus
+    + businessScope: String
+}
+
+@enduml

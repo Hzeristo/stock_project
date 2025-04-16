@@ -1,0 +1,13 @@
+@startuml trade_execution
+
+class Execution {
+    + id: Long
+    + orderId: Long
+    + securitiesAccountId: Long
+    + capitalAccountId: Long
+    + executionPrice: BigDecimal
+    + executionQuantity: int
+    + executionTime: Timestamp
+}
+
+@enduml
