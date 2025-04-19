@@ -1,5 +1,6 @@
 # Compiled class file
 *.class
+src/system/target/
 
 # Log file
 *.log
@@ -25,3 +26,6 @@ replay_pid*
 
 # use npm install instead
 node_modules/
+
+# temp 
+code/order

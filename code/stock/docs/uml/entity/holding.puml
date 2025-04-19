@@ -1,0 +1,13 @@
+@startuml  
+
+class Holding {
+    + id: Long
+    + securitiesAccountId: Long
+    + stockId: Long
+    + quantity: int
+    + averageCost: BigDecimal
+    + lastUpdated: Timestamp
+}
+
+
+@enduml

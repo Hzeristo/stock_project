@@ -1,0 +1,181 @@
+@startuml main
+
+class SecuritiesAccount {
+    - id: Long
+    - accountNumber: String
+    - registrationDate: LocalDate
+    - name: String
+    - idCardNo: String
+    - phone: String
+    - address: String
+    - status: AccountStatus
+    - capitalAccountIds: List<Long>
+    - positionId: Long
+    + getter()
+    + setter(values)
+    + toDto(): SecuritiesAccountDTO
+}
+
+class IndividualSecuritiesAccount extends SecuritiesAccount {
+    - individualGender: String
+    - individualOccupation: String
+    - individualEducation: String
+    - individualEmployer: String
+    + getter()
+    + setter(values)
+    + toDto(): IndividualSecuritiesAccountDTO
+}
+
+class CorporateSecuritiesAccount extends SecuritiesAccount {
+    - corporationName: String
+    - registrationNumber: String
+    - businessLicenseNumber: String
+    - authorizedTraderName: String
+    - authorizedTraderIdCardNo: String
+    - authorizedTraderPhone: String
+    - authorizedTraderAddress: String
+    + getter()
+    + setter(values)
+    + toDto(): CorporateSecuritiesAccountDTO
+}
+
+SecuritiesAccount -- AccountStatus : "status"
+
+enum AccountStatus {
+    ACTIVE
+    SUSPENDED
+    CLOSED
+}
+
+class CapitalAccount {
+    - id: Long
+    - capitalAccountNumber: String
+    - type: CapitalAccountType
+    - balance: BigDecimal
+    - availableBalance: BigDecimal
+    - frozenBalance: BigDecimal
+    - currency: Currency
+    - bankName: String
+    - bankAccountNumber: String
+    - status: AccountStatus
+    - securitiesAccountId: Long
+    + getter()
+    + setter(values)
+    + toDTO(): CapitalAccountDTO
+}
+
+enum CapitalAccountType {
+    TRADE
+    FUND
+}
+
+enum Currency {
+    CNY
+    USD
+}
+
+CapitalAccount -- CapitalAccountType : "type"
+CapitalAccount -- AccountStatus : "status"
+CapitalAccount -- Currency : "currency"
+
+SecuritiesAccount <-- CapitalAccount 
+
+
+class Order {
+    - id: Long
+    - accountId: Long
+    - stockCode: String
+    - orderType: OrderType
+    - orderQuantity: int
+    - orderPrice: BigDecimal
+    - orderValidity: OrderValidity
+    - orderKind: OrderKind
+    - orderStatus: OrderStatus
+    - orderTime: Timestamp
+    + getter()
+    + setter(values)
+    + toDTO(): TradeOrderDTO
+}
+
+enum OrderType {
+    BUY
+    SELL
+}
+
+enum OrderValidity {
+    DAY_ORDER
+}
+
+enum OrderKind {
+    LIMIT
+    MARKET
+    STOP
+}
+
+enum OrderStatus {
+    PENDING     
+    EXECUTED    
+    PARTIAL
+    CANCELED
+    FAILED
+}
+
+Order -- OrderType : "orderType"
+Order -- OrderValidity : "orderValidity"
+Order -- OrderKind : "orderKind"
+Order -- OrderStatus : "orderStatus"
+
+Order --> SecuritiesAccount
+
+class Execution {
+    - id: Long
+    - orderId: Long
+    - securitiesAccountId: Long
+    - capitalAccountId: Long
+    - executionPrice: BigDecimal
+    - executionQuantity: int
+    - executionTime: Timestamp
+    + getter()
+    + setter(values)
+    + toDTO(): TradeExecutionDTO
+}
+
+Order <-- Execution 
+
+Execution --> SecuritiesAccount
+Execution --> CapitalAccount
+
+class Stock {
+    - id: Long
+    - stockCode: String
+    - stockName: String
+    - exchange: Exchange
+    - fullName: String
+    - industry: String
+    - sector: String
+    - isin: String
+    - status: StockStatus
+    - businessScope: String
+    + getter()
+    + setter(values)
+    + toDTO(): StockDTO
+}
+Order --> Stock
+
+class Position {
+    - id: Long
+    - securitiesAccountId: Long
+    - stockId: Long
+    - quantity: int
+    - averageCost: BigDecimal
+    - lastUpdated: Timestamp
+    + getter()
+    + setter(values)
+    + toDTO(): PostionDTO
+}
+
+Position --> Stock
+
+Position --> SecuritiesAccount
+
+@enduml
