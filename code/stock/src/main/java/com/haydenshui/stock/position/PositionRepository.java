@@ -28,7 +28,7 @@ public interface PositionRepository extends JpaRepository<Position, Long> {
      * @return An optional containing the position if found, otherwise empty.
      * @see Position
      */
-    Optional<Position> findBySecuritiesAccountIdAndStockId(Long securitiesAccountId, Long stockId);
+    Optional<Position> findBySecuritiesAccountIdAndStockCode(Long securitiesAccountId, String stockCode);
     
     /**
      * Finds all positions associated with a given securities account.
@@ -46,5 +46,5 @@ public interface PositionRepository extends JpaRepository<Position, Long> {
      * @return A list of positions associated with the given stock.
      * @see Position
      */
-    List<Position> findByStockId(Stock stockId);
+    List<Position> findByStockCode(String stockCode);
 }

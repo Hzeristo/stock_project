@@ -101,9 +101,27 @@ public class LoggingAspect {
     }
 
     @Around("serviceLogMethods()")
-    public Object logServiceMethod(ProceedingJoinPoint joinPoint) throws Throwable {
-        //TODO: Auto-generated method stub
-        throw new UnsupportedOperationException("Not implemented");
+        public Object logServiceMethod(ProceedingJoinPoint joinPoint) throws Throwable {
+            String className = joinPoint.getTarget().getClass().getSimpleName();
+        String methodName = joinPoint.getSignature().getName();
+        Object[] args = joinPoint.getArgs();
+
+        long startTime = System.currentTimeMillis();
+
+        try {
+            serviceLogger.info(" [Service] {}.{} called with args: {}", className, methodName, Arrays.toString(args));
+
+            Object result = joinPoint.proceed();
+
+            long endTime = System.currentTimeMillis();
+            serviceLogger.info(" [Service] {}.{} finished in {} ms", className, methodName, (endTime - startTime));
+
+            return result;
+        } catch (Throwable e) {
+            long errorTime = System.currentTimeMillis();
+            serviceLogger.warn("[Service] {}.{} threw exception after {} ms: {}", className, methodName, (errorTime - startTime), e.getMessage(), e);
+            throw e;
+        }
     }
 
 }

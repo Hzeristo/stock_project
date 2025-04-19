@@ -5,6 +5,9 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+
 /**
  * Entity class representing a trade order in the system.
  *
@@ -100,7 +103,16 @@ public class TradeOrder {
      * The timestamp when the order was created.
      * This records the exact time when the order was placed in the system.
      */
+    @CreatedDate
     @Column(name = "order_time", nullable = false)
     private LocalDateTime orderTime;
+
+    /**
+     * The timestamp when the order was executed or completed.
+     * This records the exact time when the order was filled or completed.
+     */
+    @LastModifiedDate
+    @Column(name = "transaction_time")
+    private LocalDateTime transactionTime;
 
 }

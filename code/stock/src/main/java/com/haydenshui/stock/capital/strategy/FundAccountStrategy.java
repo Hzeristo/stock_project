@@ -2,17 +2,22 @@ package com.haydenshui.stock.capital.strategy;
 
 import java.util.Optional;
 
-import org.apache.rocketmq.spring.core.RocketMQTemplate;
-import org.apache.seata.rm.tcc.api.BusinessActionContext;
 import org.springframework.context.MessageSource;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.haydenshui.stock.capital.CapitalAccountRepository;
 import com.haydenshui.stock.lib.dto.capital.CapitalAccountDTO;
 import com.haydenshui.stock.lib.dto.capital.CapitalAccountTransactionDTO;
+import com.haydenshui.stock.lib.dto.capital.CapitalMapper;
 import com.haydenshui.stock.lib.entity.account.CapitalAccount;
 import com.haydenshui.stock.lib.entity.account.CapitalAccountType;
 import com.haydenshui.stock.lib.exception.InvalidStrategyInvocationException;
+import com.haydenshui.stock.lib.exception.ResourceAlreadyExistsException;
+import com.haydenshui.stock.lib.exception.ResourceNotFoundException;
+import com.haydenshui.stock.utils.BeanCopyUtils;
+
 
 @Component
 public class FundAccountStrategy implements CapitalAccountStrategy {
@@ -21,73 +26,88 @@ public class FundAccountStrategy implements CapitalAccountStrategy {
 
     private final CapitalAccountRepository capitalAccountRepository;
 
-    public FundAccountStrategy(MessageSource messageSource, CapitalAccountRepository capitalAccountRepository) {
+    private final PasswordEncoder passwordEncoder;
+
+    public FundAccountStrategy(MessageSource messageSource, CapitalAccountRepository capitalAccountRepository, PasswordEncoder passwordEncoder) {
         this.messageSource = messageSource;
         this.capitalAccountRepository = capitalAccountRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     public boolean matches(CapitalAccountType type) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'matches'");
+        return type.isFundAccount();
     }
     
     @Override
-    public Optional<CapitalAccount> createAccount(CapitalAccountDTO dto) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'createAccount'");
+    @Transactional
+    public CapitalAccount createAccount(CapitalAccountDTO dto) {
+        Optional<CapitalAccount> existingAccount = capitalAccountRepository.findByCapitalAccountNumber(dto.getCapitalAccountNumber());
+        existingAccount.ifPresent(acc -> {
+            throw new ResourceAlreadyExistsException("Capital", acc.getCapitalAccountNumber());
+        });
+        CapitalAccount account  = CapitalMapper.toEntity(dto);
+        return capitalAccountRepository.save(account);
     }
 
     @Override
-    public Optional<CapitalAccount> getAccountById(Long id) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getAccountById'");
+    public CapitalAccount getAccountById(Long id) {
+        return capitalAccountRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Capital", "[id: " + id.toString() + "]"));
     }
 
     @Override
-    public Optional<CapitalAccount> getAccountByAccountNumber(String accountNumber) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getAccountByAccountNumber'");
+    public CapitalAccount getAccountByAccountNumber(String accountNumber) {
+        return capitalAccountRepository.findByCapitalAccountNumber(accountNumber)
+            .orElseThrow(() -> new ResourceNotFoundException("Capital", "[accountNumber: " + accountNumber + "]"));
     }
 
     @Override
-    public Optional<CapitalAccount> updateAccount(CapitalAccountDTO dto) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'updateAccount'");
+    @Transactional
+    public CapitalAccount updateAccount(CapitalAccountDTO dto) {
+        Optional<CapitalAccount> existingAccount = capitalAccountRepository.findById(dto.getId());
+        if (existingAccount.isEmpty()) {
+            throw new ResourceNotFoundException("Capital", "[id: " + dto.getId().toString() + "]");
+        }
+        CapitalAccount existing = existingAccount.get();
+        CapitalAccount patch = CapitalMapper.toEntity(dto);
+        BeanCopyUtils.copyNonNullProperties(patch, existing);
+        existing.setPassword(passwordEncoder.encode(existing.getPassword()));
+        return capitalAccountRepository.save(existing);
     }
 
     @Override
-    public Optional<CapitalAccount> disableAccount(CapitalAccountDTO dto) {
+    public CapitalAccount disableAccount(CapitalAccountDTO dto) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'disableAccount'");
     }
 
     @Override
-    public Optional<CapitalAccount> restoreAccount(CapitalAccountDTO dto) {
+    public CapitalAccount restoreAccount(CapitalAccountDTO dto) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'restoreAccount'");
     }
 
     @Override
-    public Optional<CapitalAccount> reportAccountLoss(CapitalAccountDTO dto) {
+    public CapitalAccount reportAccountLoss(CapitalAccountDTO dto) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'reportAccountLoss'");
     }
 
     @Override
-    public Optional<CapitalAccount> deposit(CapitalAccountTransactionDTO dto) {
+    public CapitalAccount deposit(CapitalAccountTransactionDTO dto) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'deposit'");
     }
 
     @Override
-    public Optional<CapitalAccount> withdraw(CapitalAccountTransactionDTO dto) {
+    public CapitalAccount withdraw(CapitalAccountTransactionDTO dto) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'withdraw'");
     }
 
     @Override
-    public boolean freezeAmount(BusinessActionContext context, CapitalAccountTransactionDTO dto) {
+    public boolean freezeAmount(CapitalAccountTransactionDTO dto) {
         throw new InvalidStrategyInvocationException(
             this.getClass().getSimpleName(),
             new Object(){}.getClass().getEnclosingMethod().getName(),

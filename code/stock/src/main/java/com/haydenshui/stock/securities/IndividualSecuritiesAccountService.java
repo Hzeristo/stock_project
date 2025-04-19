@@ -1,5 +1,6 @@
 package com.haydenshui.stock.securities;
 
+import com.haydenshui.stock.constants.RocketMQConstants;
 import com.haydenshui.stock.lib.annotation.ServiceLog;
 import com.haydenshui.stock.lib.dto.securities.IndividualSecuritiesAccountDTO;
 import com.haydenshui.stock.lib.dto.securities.SecuritiesMapper;
@@ -7,11 +8,14 @@ import com.haydenshui.stock.lib.entity.account.*;
 import com.haydenshui.stock.lib.exception.ResourceAlreadyExistsException;
 import com.haydenshui.stock.lib.exception.ResourceNotFoundException;
 import com.haydenshui.stock.utils.BeanCopyUtils;
+import com.haydenshui.stock.utils.RedisUtils;
+import com.haydenshui.stock.utils.RocketMQUtils;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -41,25 +45,27 @@ public class IndividualSecuritiesAccountService implements SecuritiesAccountServ
         });
         IndividualSecuritiesAccount account = SecuritiesMapper.toEntity(dto);
         return repository.save(account);
-        //TODO: add logic to check createdAt and status
     }
 
     @Override
     @ServiceLog
     public IndividualSecuritiesAccount getAccountById(Long id) {
-        return repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("securities", "[id: " + id.toString() + "]"));
+        return repository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("securities", "[id: " + id.toString() + "]"));
     }
 
     @Override
     @ServiceLog
     public IndividualSecuritiesAccount getAccountByAccountNumber(String accountNumber) {
-        return repository.findByAccountNumber(accountNumber).orElseThrow(() -> new ResourceNotFoundException("securities", "[accountNumber: " + accountNumber + "]"));
+        return repository.findByAccountNumber(accountNumber)
+            .orElseThrow(() -> new ResourceNotFoundException("securities", "[accountNumber: " + accountNumber + "]"));
     }
 
     @Override
     @ServiceLog
     public IndividualSecuritiesAccount getAccountByIdCardNo(String idCardNo) {
-        return repository.findByIdCardNo(idCardNo).orElseThrow(() -> new ResourceNotFoundException("securities", "[idCardNo: " + idCardNo + "]"));
+        return repository.findByIdCardNo(idCardNo)
+            .orElseThrow(() -> new ResourceNotFoundException("securities", "[idCardNo: " + idCardNo + "]"));
     }
 
     @Override
@@ -132,15 +138,28 @@ public class IndividualSecuritiesAccountService implements SecuritiesAccountServ
         IndividualSecuritiesAccount existing = existingAccount.get();
 
         List<Long> capitalAccountIds = existing.getCapitalAccountIds();
+        List<CompletableFuture<Boolean>> checks = new ArrayList<>();
         for(Long id : capitalAccountIds) {
-            //TODO: add logic to check list of ids
+            checks.add(checkCapitals(id));
         }
+        CompletableFuture<Void> allChecks = CompletableFuture.allOf(checks.toArray(new CompletableFuture[0]));
+        allChecks.join();  
+        if (!checks.stream().allMatch(CompletableFuture::join)) {
+            throw new IllegalStateException("Some capital accounts are invalid.");
+        }
+
         existing.setStatus(AccountStatus.CLOSED);
         return repository.save(existing);
     }
 
-    private CompletableFuture<Boolean> checkCapitals(Long securitiesAccountId) {
+    private CompletableFuture<Boolean> checkCapitals(Long capitalAccountId) {
         return CompletableFuture.supplyAsync(() -> {
+            RocketMQUtils.sendMessageWithTag(
+                "capital",
+                RocketMQConstants.TOPIC_CAPITAL,
+                RocketMQConstants.TAG_CAPITAL_CHECK,
+                ""
+            );
             return true;
         });
     }

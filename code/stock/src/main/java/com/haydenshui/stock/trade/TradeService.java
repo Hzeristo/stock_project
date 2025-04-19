@@ -1,7 +1,5 @@
 package com.haydenshui.stock.trade;
 
-import org.apache.rocketmq.spring.core.RocketMQTemplate;
-import org.apache.seata.spring.annotation.GlobalTransactional;
 import org.springframework.stereotype.Service;
 
 import com.haydenshui.stock.lib.dto.trade.TradeDTO;

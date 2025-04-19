@@ -26,15 +26,12 @@ public class PositionController {
 
     @GetMapping()
     @LogDetails
-    public ResponseEntity<?> getPosition() {
+    public ResponseEntity<?> getPositionById(@RequestParam(required = false) String id) {
+        if (id != null) {
+            return ResponseEntity.ok(positionService.getPositionById(Long.parseLong(id)));
+        }
         Long userId = SecurityUtils.getCurrentUserId();
         return ResponseEntity.ok(positionService.getPositionBySecuritiesAccountId(userId));
-    }
-    
-    @GetMapping()
-    @LogDetails
-    public ResponseEntity<?> getPosition(@RequestParam String id) {
-        return ResponseEntity.ok(positionService.getPositionById(Long.parseLong(id)));
     }
 
     @GetMapping("/analysis")

@@ -6,6 +6,8 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import org.springframework.data.annotation.CreatedDate;
+
 /**
  * Represents a trade execution in the trading system.
  *
@@ -75,6 +77,7 @@ public class TradeExecution {
      * The timestamp when the trade was executed.
      * This field captures the exact time of the trade execution.
      */
+    @CreatedDate
     @Column(name = "execution_time", nullable = false)
     private LocalDateTime executionTime;
 
