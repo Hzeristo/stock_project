@@ -1,20 +1,26 @@
 package com.haydenshui.stock.securities;
 
+import com.alibaba.fastjson2.JSON;
+import com.haydenshui.stock.constants.RocketMQConstants;
+import com.haydenshui.stock.lib.annotation.NoTransactional;
 import com.haydenshui.stock.lib.annotation.ServiceLog;
+import com.haydenshui.stock.lib.dto.capital.CapitalCheckDTO;
 import com.haydenshui.stock.lib.dto.securities.CorporateSecuritiesAccountDTO;
 import com.haydenshui.stock.lib.dto.securities.SecuritiesMapper;
 import com.haydenshui.stock.lib.entity.account.*;
 import com.haydenshui.stock.lib.exception.ResourceAlreadyExistsException;
 import com.haydenshui.stock.lib.exception.ResourceNotFoundException;
+import com.haydenshui.stock.lib.msg.TransactionMessage;
 import com.haydenshui.stock.utils.BeanCopyUtils;
+import com.haydenshui.stock.utils.RedisUtils;
+import com.haydenshui.stock.utils.RocketMQUtils;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -93,46 +99,85 @@ public class CorporateSecuritiesAccountService implements SecuritiesAccountServi
     }
 
     @Override
-    @Transactional
+    @NoTransactional
     @ServiceLog
-    public CorporateSecuritiesAccount disableAccount(CorporateSecuritiesAccountDTO dto) {
-        Optional<CorporateSecuritiesAccount> existingAccount = repository.findById(dto.getId());
+    public void tryDisableAccount(CorporateSecuritiesAccountDTO dto) {
+        Optional<CorporateSecuritiesAccount> existingAccount = repository.findById(dto.getId()); 
         if (existingAccount.isEmpty()) {
             throw new ResourceNotFoundException("securities", "[id: " + dto.getId().toString() + "]");
         }
         CorporateSecuritiesAccount existing = existingAccount.get();
 
         List<Long> capitalAccountIds = existing.getCapitalAccountIds();
-        for(Long id : capitalAccountIds) {
-            // TODO: add logic to check list of ids
+        for (var id : capitalAccountIds){
+            RocketMQUtils.sendMessageWithTag(
+                "securities",
+                RocketMQConstants.TOPIC_CAPITAL,
+                RocketMQConstants.TAG_CAPITAL_VALIDITY_CHECK,
+                id.toString()
+            );
         }
-        existing.setStatus(AccountStatus.CLOSED);
-        return repository.save(existing);
     }
 
     @Override
-    @Transactional
+    @NoTransactional
     @ServiceLog
-    public CorporateSecuritiesAccount disableAccount(CorporateSecuritiesAccount account) {
-        Optional<CorporateSecuritiesAccount> existingAccount = repository.findById(account.getId());
+    public void tryDisableAccount(CorporateSecuritiesAccount account) {
+        Optional<CorporateSecuritiesAccount> existingAccount = repository.findById(account.getId()); 
         if (existingAccount.isEmpty()) {
             throw new ResourceNotFoundException("securities", "[id: " + account.getId().toString() + "]");
         }
         CorporateSecuritiesAccount existing = existingAccount.get();
 
         List<Long> capitalAccountIds = existing.getCapitalAccountIds();
-        for(Long id : capitalAccountIds) {
-            // TODO: add logic to check list of ids
+        for (var id : capitalAccountIds){
+            RedisUtils.hSet("tcc:close:" + account.getId(), id.toString(), "PENDING");
+            CapitalCheckDTO dto = new CapitalCheckDTO(id, account.getId(), "corporate", false, "");
+            RocketMQUtils.sendMessageWithTag(
+                "securities",
+                RocketMQConstants.TOPIC_CAPITAL,
+                RocketMQConstants.TAG_CAPITAL_VALIDITY_CHECK,
+                JSON.toJSONString(TransactionMessage.<CapitalCheckDTO>builder()
+                    .businessAction("capital-check")
+                    .payload(dto)
+                )
+            );
         }
-        existing.setStatus(AccountStatus.CLOSED);
-        return repository.save(existing);    
+        RedisUtils.expire("tcc:close:" + account.getId(), 5, TimeUnit.MINUTES);
     }
 
-    private CompletableFuture<Boolean> checkCapitals(Long securitiesAccountId) {
-        return CompletableFuture.supplyAsync(() -> {
-            return true;
-        });
+    @NoTransactional
+    @ServiceLog
+    public CorporateSecuritiesAccount confirmDisableAccount(CapitalCheckDTO dto) {
+        String redisKey = "tcc:close:" + dto.getSecuritiesAccountId();
+        String capitalAccountId = dto.getCapitalAccountId().toString();
+
+        String status = dto.isPassed() ? "SUCCESS" : "FAILURE";
+        RedisUtils.hSet(redisKey, capitalAccountId, status);
+
+        Map<Object, Object> checkStatusMap = RedisUtils.hGetAll(redisKey);
+
+        boolean allChecked = checkStatusMap.values().stream()
+            .noneMatch(val -> "PENDING".equals(val));
+
+        if (!allChecked) {
+            return null;
+        }
+
+        RedisUtils.delete(redisKey);
+
+        boolean allSuccess = checkStatusMap.values().stream()
+            .allMatch(val -> "SUCCESS".equals(val));
+        if (!allSuccess) {
+            return null;
+        }
+        CorporateSecuritiesAccount account = repository.findById(dto.getSecuritiesAccountId())
+            .orElseThrow(() -> new ResourceNotFoundException("securities", "[id: " + dto.getSecuritiesAccountId() + "]"));
+        account.setStatus(AccountStatus.CLOSED);
+        return repository.save(account);
     }
+
+
 
     @Override
     @Transactional
@@ -200,6 +245,8 @@ public class CorporateSecuritiesAccountService implements SecuritiesAccountServi
         account.setStatus(AccountStatus.ACTIVE);
         return repository.save(account);    
     }
+
+
 
 }
     

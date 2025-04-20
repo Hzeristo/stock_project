@@ -19,7 +19,7 @@ import com.haydenshui.stock.lib.msg.TransactionMessage;
 import com.haydenshui.stock.utils.RocketMQUtils;
 
 @Component
-@RocketMQMessageListener(topic = RocketMQConstants.TOPIC_POSITION, consumerGroup = "position-update-group")
+@RocketMQMessageListener(topic = RocketMQConstants.TOPIC_POSITION, consumerGroup = RocketMQConstants.CONSUMER_POSITION)
 public class PositionListener implements RocketMQListener<MessageExt> {
 
     private final PositionService positionService;
@@ -59,7 +59,8 @@ public class PositionListener implements RocketMQListener<MessageExt> {
         );
     
         Consumer<TransactionMessage<PositionTransactionalDTO>> handler = tagHandlerMap.get(tag);
-        if (handler == null) throw new IllegalArgumentException("Unsupported tag: " + tag);
+        if (handler == null) 
+            throw new IllegalArgumentException("Unsupported tag: " + tag);
     
         try {
             handler.accept(tmsg);

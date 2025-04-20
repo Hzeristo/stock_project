@@ -1,63 +1,36 @@
 package com.haydenshui.stock.capital.strategy;
 
-import java.util.Optional;
+import java.math.BigDecimal;
 
-import org.apache.rocketmq.spring.core.RocketMQTemplate;
-import org.springframework.context.MessageSource;
+import org.springframework.boot.autoconfigure.cache.CacheProperties.Redis;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.haydenshui.stock.capital.CapitalAccountRepository;
+import com.haydenshui.stock.lib.annotation.Lock;
 import com.haydenshui.stock.lib.annotation.NoTransactional;
 import com.haydenshui.stock.lib.dto.capital.CapitalAccountDTO;
 import com.haydenshui.stock.lib.dto.capital.CapitalAccountTransactionDTO;
 import com.haydenshui.stock.lib.entity.account.CapitalAccount;
 import com.haydenshui.stock.lib.entity.account.CapitalAccountType;
+import com.haydenshui.stock.lib.entity.tcc.TccContext;
+import com.haydenshui.stock.lib.exception.ResourceNotFoundException;
+import com.haydenshui.stock.utils.RedisUtils;
 
 
 @Component
-public class TradeAccountStrategy implements CapitalAccountStrategy {
+public class TradeAccountStrategy extends AbstractCapitalAccountStrategy {
 
-    private final CapitalAccountRepository capitalAccountRepository;
-
-    public TradeAccountStrategy(CapitalAccountRepository capitalAccountRepository) {
-        this.capitalAccountRepository = capitalAccountRepository;
+    public TradeAccountStrategy(CapitalAccountRepository capitalAccountRepository, PasswordEncoder passwordEncoder) {
+        super(capitalAccountRepository, passwordEncoder);
     }
 
     @Override
     public boolean matches(CapitalAccountType type) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'matches'");
+        return type.isTradeAccount();
     }
-
     @Override
-    @Transactional
-    public CapitalAccount createAccount(CapitalAccountDTO dto) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'createAccount'");
-    }
-
-    @Override
-    public CapitalAccount getAccountById(Long id) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getAccountById'");
-    }
-
-    @Override
-    public CapitalAccount getAccountByAccountNumber(String accountNumber) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getAccountByAccountNumber'");
-    }
-
-    @Override
-    @Transactional
-    public CapitalAccount updateAccount(CapitalAccountDTO dto) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'updateAccount'");
-    }
-
-    @Override
-    @Transactional
     public CapitalAccount disableAccount(CapitalAccountDTO dto) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'disableAccount'");
@@ -92,22 +65,108 @@ public class TradeAccountStrategy implements CapitalAccountStrategy {
     }
 
     @Override
+    @Lock(lockKey = "LOCK:TCC:CAPITAL:{capitalDTO.capitalAccountId}")
     @NoTransactional
-    public boolean freezeAmount(CapitalAccountTransactionDTO dto) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'freezeAmount'");
+    public void freezeAmount(TccContext context, CapitalAccountTransactionDTO capitalDTO) {
+        String xid = context.getXid();
+        String freezeKey = "TCC:" + xid + ":capital:" + capitalDTO.getId() + ":freeze";
+
+        if (RedisUtils.hasKey(freezeKey)) {
+            return;
+        }
+
+        CapitalAccount capitalAccount = capitalAccountRepository.findById(capitalDTO.getId())
+            .orElseThrow(() -> new ResourceNotFoundException("capitalAccount", "[id: " + capitalDTO.getId() + "]"));
+
+        BigDecimal freezeAmount = capitalDTO.getAmount();
+        if (capitalAccount.getAvailableBalance().compareTo(freezeAmount) < 0) {
+            throw new ResourceNotFoundException("capitalAccount", "[id: " + capitalDTO.getId() + "]");
+        }
+
+        capitalAccount.setAvailableBalance(
+            freezeAmount.compareTo(BigDecimal.ZERO) == 1 ? 
+            capitalAccount.getAvailableBalance() : 
+            capitalAccount.getAvailableBalance().add(freezeAmount)//neg
+        );
+        capitalAccount.setFrozenBalance(
+            freezeAmount.compareTo(BigDecimal.ZERO) == 1 ? 
+            capitalAccount.getFrozenBalance() :
+            capitalAccount.getFrozenBalance().subtract(freezeAmount)//neg
+        );
+        capitalAccountRepository.save(capitalAccount);
+
+        context.put("capitalId", capitalAccount.getId());
+        context.put("freezeAmount", freezeAmount); //freezeAmount can be neg
+        RedisUtils.set(freezeKey, String.valueOf(freezeAmount));
     }
 
+    @Lock(lockKey = "LOCK:TCC:CAPITAL:{capitalDTO.capitalAccountId}")
     @NoTransactional
-    public boolean commitfreezeAmount() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'commitfreezeAmount'");
+    public boolean commitfreezeAmount(TccContext context, CapitalAccountTransactionDTO capitalDTO) {
+        String xid = context.getXid();
+        String freezeKey = "TCC:" + xid + ":capital:" + capitalDTO.getId() + ":freeze";
+        String commitKey = "TCC:" + xid + ":capital:" + capitalDTO.getId() + ":commit";
+        String cancelKey = "TCC:" + xid + ":capital:" + capitalDTO.getId() + ":cancel";
+
+        String commitStatus = RedisUtils.get(commitKey);
+        if ("COMMITED".equals(commitStatus) || RedisUtils.hasKey(cancelKey)) {
+            return true;
+        }
+
+        CapitalAccount capitalAccount = capitalAccountRepository.findById(capitalDTO.getId())
+            .orElseThrow(() -> new ResourceNotFoundException("capitalAccount", "[id: " + capitalDTO.getId() + "]"));
+
+        capitalAccount.setFrozenBalance(
+            capitalDTO.getAmount().compareTo(BigDecimal.ZERO) == 1 ? 
+            capitalAccount.getFrozenBalance() :
+            capitalAccount.getFrozenBalance().add(capitalDTO.getAmount())//neg
+        );
+        capitalAccount.setBalance(capitalAccount.getBalance().add(capitalDTO.getAmount()));
+        capitalAccountRepository.save(capitalAccount);
+
+        BigDecimal frozenAmount = context.get("freezeAmount", BigDecimal.class)
+                                    .add(capitalDTO.getAmount());
+        context.put("freezeAmount", frozenAmount);
+
+        if (frozenAmount.equals(BigDecimal.ZERO)) {
+            RedisUtils.delete(freezeKey);
+            RedisUtils.set(commitKey, "COMMITTED");
+            return true;
+        } else {
+            RedisUtils.set(commitKey, "PENDING");
+            return false;
+        }
     }
 
+    @Lock(lockKey = "LOCK:TCC:CAPITAL:{capitalDTO.capitalAccountId}")
     @NoTransactional
-    public boolean rollbackfreezeAmount() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'rollbackfreezeAmoubt'");
+    public void rollbackfreezeAmount(TccContext context, CapitalAccountTransactionDTO capitalDTO) {
+        String xid = context.getXid();
+        String freezeKey = "TCC:" + xid + ":capital:" + capitalDTO.getId() + ":freeze";
+        String cancelKey = "TCC:" + xid + ":capital:" + capitalDTO.getId() + ":cancel";
+    
+        if (RedisUtils.hasKey(cancelKey)) {
+            return;
+        }
+    
+        CapitalAccount capitalAccount = capitalAccountRepository.findById(capitalDTO.getId())
+            .orElseThrow(() -> new ResourceNotFoundException("capitalAccount", "[id: " + capitalDTO.getId() + "]"));
+    
+        BigDecimal freezeAmount = context.get("freezeAmount", BigDecimal.class);
+        capitalAccount.setAvailableBalance(
+            freezeAmount.compareTo(BigDecimal.ZERO) == 1 ? 
+            capitalAccount.getAvailableBalance() : 
+            capitalAccount.getAvailableBalance().subtract(freezeAmount)//neg
+        );
+        capitalAccount.setFrozenBalance(
+            freezeAmount.compareTo(BigDecimal.ZERO) == 1 ? 
+            capitalAccount.getFrozenBalance() :
+            capitalAccount.getFrozenBalance().add(freezeAmount)
+        );
+        capitalAccountRepository.save(capitalAccount);
+    
+        RedisUtils.delete(freezeKey);
+        RedisUtils.set(cancelKey, "CANCELED");
     }
 
 }

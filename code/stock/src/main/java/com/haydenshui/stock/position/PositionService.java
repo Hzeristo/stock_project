@@ -56,12 +56,15 @@ public class PositionService {
         Position position = repository.findById(positionDTO.getId())
             .orElseThrow(() -> new ResourceNotFoundException("position", "[id: " + positionDTO.getId() + "]"));
     
-        int freezeAmount = Math.abs(positionDTO.getQuantity());
-        if (positionDTO.getQuantity() < 0 && position.getQuantity() - position.getFrozenQuantity() < freezeAmount) {
+        int freezeAmount = positionDTO.getQuantity();
+        if (freezeAmount < 0 && position.getQuantity() + freezeAmount < 0) {
             throw new ResourceInsufficientException("position", "[id: " + positionDTO.getId() + "]", "Sell");
         }
     
-        position.setFrozenQuantity(position.getFrozenQuantity() + (positionDTO.getQuantity() < 0 ? freezeAmount : -freezeAmount));
+        position.setFrozenQuantity(
+            position.getFrozenQuantity() + 
+            (positionDTO.getQuantity() < 0 ? freezeAmount : 0)
+        );
         repository.save(position);
     
         context.put("positionId", position.getId());
@@ -86,7 +89,10 @@ public class PositionService {
                 .orElseThrow(() -> new ResourceNotFoundException("position", "[id: " + positionDTO.getId() + "]"));
     
         position.setQuantity(position.getQuantity() + positionDTO.getQuantity());
-        position.setFrozenQuantity(position.getFrozenQuantity() + positionDTO.getQuantity());
+        position.setFrozenQuantity(
+            position.getFrozenQuantity() + 
+            (positionDTO.getQuantity() < 0 ? positionDTO.getQuantity() : 0)
+        );
         repository.save(position);
 
         PositionChangeLog positionChangeLog = PositionChangeLog.builder()

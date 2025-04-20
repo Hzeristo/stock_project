@@ -56,20 +56,26 @@ rocketmq-config:
     trade: trade_producer_group
     capital: capital_producer_group
     position: position_producer_group
+    securities: securities_producer_group
   
   consumers:
     trade: trade_consumer_group
     capital: capital_consumer_group
     position: position_consumer_group
+    securities: securities_consumer_group
 
   topics:
     trade: TRADE_TOPIC
     match: MATCH_TOPIC
     position: POSITION_TOPIC
     capital: CAPITAL_TOPIC
+    securities: SECURITIES_TOPIC
 
   tags:
     trade-create: TRADE_CREATE
     trade-confirm: TRADE_CONFIRM
     trade-cancel: TRADE_CANCEL
     capital-check: CAPITAL_CHECK
+    capital-validity-check: CAPITAL_VALIDITY_CHECK
+    capital-validity-confirm: CAPITAL_VALIDITY_CONFIRM
+    securities-check: SECURITIES_CHECK

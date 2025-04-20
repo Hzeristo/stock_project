@@ -5,6 +5,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
+
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -43,5 +45,13 @@ public class RedisUtils {
 
     public static void expire(String key, long timeout, TimeUnit unit) {
         staticRedisTemplate.expire(key, timeout, unit);
+    }
+
+    public static void hSet(String key, String field, String value) {
+        staticRedisTemplate.opsForHash().put(key, field, value);
+    }
+
+    public static Map<Object, Object> hGetAll(String key) {
+        return staticRedisTemplate.opsForHash().entries(key);
     }
 }

@@ -13,8 +13,6 @@ import lombok.*;
 public class TransactionMessage<T> {   
 
     private String businessAction;   
-
-    private LocalDateTime timestamp;  
     
     private TccContext context;
     
@@ -23,5 +21,8 @@ public class TransactionMessage<T> {
     private String errorCode;
 
     private String errorMessage;
+
+    @Builder.Default
+    private LocalDateTime timestamp = LocalDateTime.now();  
 
 }

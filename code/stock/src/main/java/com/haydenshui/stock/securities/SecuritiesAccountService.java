@@ -19,9 +19,9 @@ public interface SecuritiesAccountService<T extends SecuritiesAccount, D extends
 
     T updateAccount(T account);
 
-    T disableAccount(D dto);
+    void tryDisableAccount(D dto);
 
-    T disableAccount(T account);
+    void tryDisableAccount(T account);
 
     T reportAccountLoss(D dto);
 

@@ -1,14 +1,14 @@
 package com.haydenshui.stock.capital;
 
-import java.util.Optional;
-
 import org.springframework.stereotype.Service;
 
 import com.haydenshui.stock.capital.strategy.CapitalAccountStrategyFactory;
 import com.haydenshui.stock.lib.dto.capital.CapitalAccountDTO;
 import com.haydenshui.stock.lib.dto.capital.CapitalAccountTransactionDTO;
+import com.haydenshui.stock.lib.dto.capital.CapitalCheckDTO;
 import com.haydenshui.stock.lib.entity.account.CapitalAccount;
 import com.haydenshui.stock.lib.entity.account.CapitalAccountType;
+import com.haydenshui.stock.lib.entity.tcc.TccContext;
 
 @Service
 public class CapitalAccountService {
@@ -29,6 +29,11 @@ public class CapitalAccountService {
 
     public CapitalAccount getAccountByAccountNumber(String accountNumber, CapitalAccountType type) {
         return strategyFactory.getStrategy(type).getAccountByAccountNumber(accountNumber);
+    }
+
+    
+    public boolean disableValidity(CapitalCheckDTO payload, CapitalAccountType type) {
+        return strategyFactory.getStrategy(type).disableValidity(payload);
     }
 
     public CapitalAccount updateAccount(CapitalAccountDTO dto, CapitalAccountType type) {
@@ -55,8 +60,9 @@ public class CapitalAccountService {
         return strategyFactory.getStrategy(type).withdraw(dto);
     }
 
-    public boolean freezeAmount(CapitalAccountTransactionDTO dto, CapitalAccountType type) {
-        return strategyFactory.getStrategy(type).freezeAmount(dto);
+    public void freezeAmount(TccContext context, CapitalAccountTransactionDTO dto, CapitalAccountType type) {
+        strategyFactory.getStrategy(type).freezeAmount(context, dto);
     }
+
     
 }

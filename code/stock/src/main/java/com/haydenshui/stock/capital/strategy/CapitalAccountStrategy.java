@@ -1,11 +1,15 @@
 package com.haydenshui.stock.capital.strategy;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 import com.haydenshui.stock.lib.dto.capital.CapitalAccountDTO;
 import com.haydenshui.stock.lib.dto.capital.CapitalAccountTransactionDTO;
+import com.haydenshui.stock.lib.dto.capital.CapitalCheckDTO;
 import com.haydenshui.stock.lib.entity.account.CapitalAccount;
 import com.haydenshui.stock.lib.entity.account.CapitalAccountType;
+import com.haydenshui.stock.lib.entity.tcc.TccContext;
+import com.haydenshui.stock.lib.exception.ResourceNotFoundException;
 
 public interface CapitalAccountStrategy {
     
@@ -25,6 +29,8 @@ public interface CapitalAccountStrategy {
 
     // ======= account security =======
 
+    boolean disableValidity(CapitalCheckDTO dto);
+
     CapitalAccount restoreAccount(CapitalAccountDTO dto);
 
     CapitalAccount reportAccountLoss(CapitalAccountDTO dto);
@@ -35,6 +41,6 @@ public interface CapitalAccountStrategy {
 
     CapitalAccount withdraw(CapitalAccountTransactionDTO dto);
 
-    boolean freezeAmount(CapitalAccountTransactionDTO dto);
+    void freezeAmount(TccContext context, CapitalAccountTransactionDTO dto);
 
 }
