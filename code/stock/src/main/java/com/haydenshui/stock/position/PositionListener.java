@@ -16,12 +16,17 @@ import com.haydenshui.stock.lib.exception.ResourceNotFoundException;
 import com.haydenshui.stock.lib.msg.TransactionMessage;
 import com.haydenshui.stock.utils.RocketMQUtils;
 
+import java.util.List;
+
 @Component
 @RocketMQMessageListener(topic = RocketMQConstants.TOPIC_POSITION, consumerGroup = "position-update-group")
 public class PositionListener implements RocketMQListener<MessageExt> {
 
     @Autowired
     private PositionService positionService;
+
+    @Autowired
+    private StopLossTakeProfitRuleRepository stopLossTakeProfitRuleRepository;
 
     @Override
     public void onMessage(MessageExt messageExt) {
@@ -36,6 +41,19 @@ public class PositionListener implements RocketMQListener<MessageExt> {
         context.setXid(msg.getXid());
 
         PositionTransactionalDTO dto = msg.getPayload();
+        List<StopLossTakeProfitRule> rules = stopLossTakeProfitRuleRepository.findByPositionId(dto.getId());
+
+        for (StopLossTakeProfitRule rule : rules) {
+            if (rule.getStatus() == RuleStatus.ACTIVE) {
+                if ((rule.getType() == RuleType.STOP_LOSS && dto.getTransactionalPrice().compareTo(rule.getThreshold()) <= 0) ||
+                    (rule.getType() == RuleType.TAKE_PROFIT && dto.getTransactionalPrice().compareTo(rule.getThreshold()) >= 0)) {
+                    rule.setStatus(RuleStatus.TRIGGERED);
+                    stopLossTakeProfitRuleRepository.save(rule);
+                    // TODO: 触发止盈止损操作
+                }
+            }
+        }
+
         try {
             switch (tag) {
                 case RocketMQConstants.TAG_TRADE_CREATE:
