@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.haydenshui.stock.lib.annotation.Lock;
 import com.haydenshui.stock.lib.annotation.NoTransactional;
 import com.haydenshui.stock.lib.dto.trade.TradeOrderDTO;
 import com.haydenshui.stock.lib.entity.trade.TradeOrder;
@@ -20,30 +21,31 @@ public class TradeOrderService {
     }
 
     @Transactional
-    public Optional<TradeOrder> createOrder(TradeOrderDTO tradeOrderDTO) {
+    public TradeOrder createOrder(TradeOrderDTO tradeOrderDTO) {
         //TODO: Auto generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'createOrder'");
     }
 
 
-    public Optional<TradeOrder> getOrderById(Long id) {
+    public TradeOrder getOrderById(Long id) {
         //TODO: Auto generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getOrderById'");
     }
 
-    public Optional<List<TradeOrder>> getOrderByAccount(Long securitiesAccountId) {
+    public List<TradeOrder> getOrderByAccount(Long securitiesAccountId) {
         //TODO: Auto generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getOrderByAccount'");
     }
 
     @Transactional
-    public Optional<TradeOrder> updateOrder(TradeOrderDTO tradeOrderDTO) {
+    public TradeOrder updateOrder(TradeOrderDTO tradeOrderDTO) {
         //TODO: Auto generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'updateOrder'");
     }
-    
+
+    @Lock(lockKey = "LOCK:TCC:TRADEORDER:{tradeOrderDTO.id}")
     @NoTransactional
-    public boolean placeTradeOrder(TradeOrderDTO tradeOrderDTO) {
+    public void placeTradeOrder(TradeOrderDTO tradeOrderDTO) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'placeTradeOrder'");
     }
@@ -55,7 +57,7 @@ public class TradeOrderService {
     }
 
     @NoTransactional
-    public boolean rollbackPlaceTradeOrder() {
+    public void rollbackPlaceTradeOrder() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'rollbackPlaceTradeOrder'");
     }
