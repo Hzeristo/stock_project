@@ -55,7 +55,7 @@ public class LockAspect {
         StringBuffer sb = new StringBuffer();
 
         while (matcher.find()) {
-            String placeholder = matcher.group(1); // positionDTO.id
+            String placeholder = matcher.group(1);
             String[] parts = placeholder.split("\\.");
             String paramName = parts[0];
 

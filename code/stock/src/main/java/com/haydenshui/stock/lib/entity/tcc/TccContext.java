@@ -5,15 +5,15 @@ import java.util.Map;
 
 public class TccContext {
     
-    private final String xid;
+    private final String ctxXid;
     private final Map<String, Object> context = new HashMap<>();
 
     public TccContext(String xid) {
-        this.xid = xid;
+        this.ctxXid = xid;
     }
 
-    public String getXid() {
-        return xid;
+    public String getCtxXid() {
+        return ctxXid;
     }
 
     public void put(String key, Object value) {

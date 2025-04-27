@@ -30,7 +30,6 @@ public class CapitalListener implements RocketMQListener<MessageExt> {
             );
             capitalService.disableValidity(tmsg.getPayload(), CapitalAccountType.FUND); 
         });
-
         tagHandlerMap.put(RocketMQConstants.TAG_CAPITAL_VALIDITY_CONFIRM, raw -> {
         });
 

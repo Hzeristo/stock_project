@@ -1,27 +1,5 @@
-package com.haydenshui.stock.securities;
+package com.haydenshui.stock.securities.strategy;
 
-import com.alibaba.fastjson2.JSON;
-import com.haydenshui.stock.constants.RocketMQConstants;
-import com.haydenshui.stock.lib.annotation.NoTransactional;
-import com.haydenshui.stock.lib.annotation.ServiceLog;
-import com.haydenshui.stock.lib.dto.capital.CapitalCheckDTO;
-import com.haydenshui.stock.lib.dto.securities.IndividualSecuritiesAccountDTO;
-import com.haydenshui.stock.lib.dto.securities.SecuritiesMapper;
-import com.haydenshui.stock.lib.entity.account.*;
-import com.haydenshui.stock.lib.exception.ResourceAlreadyExistsException;
-import com.haydenshui.stock.lib.exception.ResourceNotFoundException;
-import com.haydenshui.stock.lib.msg.TransactionMessage;
-import com.haydenshui.stock.utils.BeanCopyUtils;
-import com.haydenshui.stock.utils.RedisUtils;
-import com.haydenshui.stock.utils.RocketMQUtils;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.boot.autoconfigure.pulsar.PulsarProperties.Transaction;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -30,101 +8,111 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-@Service
-public class IndividualSecuritiesAccountService implements SecuritiesAccountService<IndividualSecuritiesAccount, IndividualSecuritiesAccountDTO> {
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 
-    private final IndividualSecuritiesAccountRepository repository;
+import com.alibaba.fastjson2.JSON;
+import com.haydenshui.stock.constants.RocketMQConstants;
+import com.haydenshui.stock.lib.annotation.LocalTcc;
+import com.haydenshui.stock.lib.annotation.ServiceLog;
+import com.haydenshui.stock.lib.dto.capital.CapitalCheckDTO;
+import com.haydenshui.stock.lib.dto.securities.CorporateSecuritiesAccountDTO;
+import com.haydenshui.stock.lib.dto.securities.SecuritiesMapper;
+import com.haydenshui.stock.lib.entity.account.AccountStatus;
+import com.haydenshui.stock.lib.entity.account.CorporateSecuritiesAccount;
+import com.haydenshui.stock.lib.exception.ResourceAlreadyExistsException;
+import com.haydenshui.stock.lib.exception.ResourceNotFoundException;
+import com.haydenshui.stock.lib.msg.TransactionMessage;
+import com.haydenshui.stock.securities.CorporateSecuritiesAccountRepository;
+import com.haydenshui.stock.utils.BeanCopyUtils;
+import com.haydenshui.stock.utils.RedisUtils;
+import com.haydenshui.stock.utils.RocketMQUtils;
+
+public class CorporateSecuritiesAccountStrategy implements SecuritiesAccountStrategy<CorporateSecuritiesAccount, CorporateSecuritiesAccountDTO> {
+        
+    private final CorporateSecuritiesAccountRepository repository;
 
     private final PasswordEncoder passwordEncoder;
 
-    public IndividualSecuritiesAccountService(IndividualSecuritiesAccountRepository repository, PasswordEncoder passwordEncoder) {
+    public CorporateSecuritiesAccountStrategy(CorporateSecuritiesAccountRepository repository, PasswordEncoder passwordEncoder) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
     }
 
     @Override
+    public boolean matches(String type) {
+        return type.equals("corporate");
+    }
+
+    @Override
     @Transactional
     @ServiceLog
-    public IndividualSecuritiesAccount createAccount(IndividualSecuritiesAccountDTO dto) {
-        Optional<IndividualSecuritiesAccount> existingAccount = repository.findByAccountNumber(dto.getAccountNumber());
+    public CorporateSecuritiesAccount createAccount(CorporateSecuritiesAccountDTO dto) {
+        Optional<CorporateSecuritiesAccount> existingAccount = repository.findByAccountNumber(dto.getAccountNumber());
         existingAccount.ifPresent(acc -> {
             throw new ResourceAlreadyExistsException("Securities", acc.getAccountNumber());
         });
-        IndividualSecuritiesAccount account = SecuritiesMapper.toEntity(dto);
+        CorporateSecuritiesAccount account = SecuritiesMapper.toEntity(dto);
         return repository.save(account);
+        //TODO: add logic to check createdAt and status
     }
 
     @Override
     @ServiceLog
-    public IndividualSecuritiesAccount getAccountById(Long id) {
-        return repository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("securities", "[id: " + id.toString() + "]"));
+    public CorporateSecuritiesAccount getAccountById(Long id) {
+        return repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("securities", "[id: " + id.toString() + "]"));
     }
 
     @Override
     @ServiceLog
-    public IndividualSecuritiesAccount getAccountByAccountNumber(String accountNumber) {
-        return repository.findByAccountNumber(accountNumber)
-            .orElseThrow(() -> new ResourceNotFoundException("securities", "[accountNumber: " + accountNumber + "]"));
+    public CorporateSecuritiesAccount getAccountByAccountNumber(String accountNumber) {
+        return repository.findByAccountNumber(accountNumber).orElseThrow(() -> new ResourceNotFoundException("securities", "[accountNumber: " + accountNumber + "]"));
     }
 
     @Override
     @ServiceLog
-    public IndividualSecuritiesAccount getAccountByIdCardNo(String idCardNo) {
-        return repository.findByIdCardNo(idCardNo)
-            .orElseThrow(() -> new ResourceNotFoundException("securities", "[idCardNo: " + idCardNo + "]"));
+    public CorporateSecuritiesAccount getAccountByIdCardNo(String idCardNo) {
+        return repository.findByIdCardNo(idCardNo).orElseThrow(() -> new ResourceNotFoundException("securities", "[idCardNo: " + idCardNo + "]"));
     }
 
     @Override
     @Transactional
     @ServiceLog
-    public IndividualSecuritiesAccount updateAccount(IndividualSecuritiesAccountDTO dto) {
-        Optional<IndividualSecuritiesAccount> existingAccount = repository.findById(dto.getId());
+    public CorporateSecuritiesAccount updateAccount(CorporateSecuritiesAccountDTO dto) {
+        Optional<CorporateSecuritiesAccount> existingAccount = repository.findById(dto.getId());
         if (existingAccount.isEmpty()) {
             throw new ResourceNotFoundException("securities", "[id: " + dto.getId().toString() + "]");
         }
-        IndividualSecuritiesAccount existing = existingAccount.get();
-        IndividualSecuritiesAccount patch = SecuritiesMapper.toEntity(dto);
+        CorporateSecuritiesAccount existing = existingAccount.get();
+        CorporateSecuritiesAccount patch = SecuritiesMapper.toEntity(dto);
         BeanCopyUtils.copyNonNullProperties(patch, existing);
         existing.setPassword(passwordEncoder.encode(existing.getPassword()));
-        return repository.save(existing);
+        return repository.save(existing);   
     }
 
     @Override
     @Transactional
     @ServiceLog
-    /**
-     * Updates an existing securities account.
-     * <p>
-     * This method will update the securities account information,
-     * excluding the modification of the associated capital account list (capitalAccountIds).
-     * If the account does not exist, a ResourceNotFoundException will be thrown.
-     * </p>
-     * 
-     * @param account the account to update
-     * @return an Optional containing the updated IndividualSecuritiesAccount if successful
-     * @throws ResourceNotFoundException if the account is not found
-     */
-    public IndividualSecuritiesAccount updateAccount(IndividualSecuritiesAccount account) {
-        Optional<IndividualSecuritiesAccount> existingAccount = repository.findById(account.getId());
+    public CorporateSecuritiesAccount updateAccount(CorporateSecuritiesAccount account) {
+        Optional<CorporateSecuritiesAccount> existingAccount = repository.findById(account.getId());
         if (existingAccount.isEmpty()) {
             throw new ResourceNotFoundException("securities", "[id: " + account.getId().toString() + "]");
         }
-        IndividualSecuritiesAccount existing = existingAccount.get();
+        CorporateSecuritiesAccount existing = existingAccount.get();
         BeanCopyUtils.copyNonNullProperties(account, existing);
         existing.setPassword(passwordEncoder.encode(existing.getPassword()));
-        return repository.save(existing);
+        return repository.save(existing);    
     }
 
     @Override
-    @NoTransactional
+    @LocalTcc
     @ServiceLog
-    public void tryDisableAccount(IndividualSecuritiesAccountDTO dto) {
-        Optional<IndividualSecuritiesAccount> existingAccount = repository.findById(dto.getId()); 
+    public void tryDisableAccount(CorporateSecuritiesAccountDTO dto) {
+        Optional<CorporateSecuritiesAccount> existingAccount = repository.findById(dto.getId()); 
         if (existingAccount.isEmpty()) {
             throw new ResourceNotFoundException("securities", "[id: " + dto.getId().toString() + "]");
         }
-        IndividualSecuritiesAccount existing = existingAccount.get();
+        CorporateSecuritiesAccount existing = existingAccount.get();
 
         List<Long> capitalAccountIds = existing.getCapitalAccountIds();
         for (var id : capitalAccountIds){
@@ -138,19 +126,19 @@ public class IndividualSecuritiesAccountService implements SecuritiesAccountServ
     }
 
     @Override
-    @NoTransactional
+    @LocalTcc
     @ServiceLog
-    public void tryDisableAccount(IndividualSecuritiesAccount account) {
-        Optional<IndividualSecuritiesAccount> existingAccount = repository.findById(account.getId()); 
+    public void tryDisableAccount(CorporateSecuritiesAccount account) {
+        Optional<CorporateSecuritiesAccount> existingAccount = repository.findById(account.getId()); 
         if (existingAccount.isEmpty()) {
             throw new ResourceNotFoundException("securities", "[id: " + account.getId().toString() + "]");
         }
-        IndividualSecuritiesAccount existing = existingAccount.get();
+        CorporateSecuritiesAccount existing = existingAccount.get();
 
         List<Long> capitalAccountIds = existing.getCapitalAccountIds();
         for (var id : capitalAccountIds){
             RedisUtils.hSet("tcc:close:" + account.getId(), id.toString(), "PENDING");
-            CapitalCheckDTO dto = new CapitalCheckDTO(id, account.getId(), "individual", false, "");
+            CapitalCheckDTO dto = new CapitalCheckDTO(id, account.getId(), "corporate", false, "");
             RocketMQUtils.sendMessageWithTag(
                 "securities",
                 RocketMQConstants.TOPIC_CAPITAL,
@@ -164,9 +152,9 @@ public class IndividualSecuritiesAccountService implements SecuritiesAccountServ
         RedisUtils.expire("tcc:close:" + account.getId(), 5, TimeUnit.MINUTES);
     }
 
-    @NoTransactional
+    @LocalTcc
     @ServiceLog
-    public IndividualSecuritiesAccount confirmDisableAccount(CapitalCheckDTO dto) {
+    public CorporateSecuritiesAccount confirmDisableAccount(CapitalCheckDTO dto) {
         String redisKey = "tcc:close:" + dto.getSecuritiesAccountId();
         String capitalAccountId = dto.getCapitalAccountId().toString();
 
@@ -186,22 +174,26 @@ public class IndividualSecuritiesAccountService implements SecuritiesAccountServ
 
         boolean allSuccess = checkStatusMap.values().stream()
             .allMatch(val -> "SUCCESS".equals(val));
-        if (!allSuccess) return null;
-        IndividualSecuritiesAccount account = repository.findById(dto.getSecuritiesAccountId())
+        if (!allSuccess) {
+            return null;
+        }
+        CorporateSecuritiesAccount account = repository.findById(dto.getSecuritiesAccountId())
             .orElseThrow(() -> new ResourceNotFoundException("securities", "[id: " + dto.getSecuritiesAccountId() + "]"));
         account.setStatus(AccountStatus.CLOSED);
         return repository.save(account);
     }
 
+
+
     @Override
     @Transactional
     @ServiceLog
-    public IndividualSecuritiesAccount reportAccountLoss(IndividualSecuritiesAccountDTO dto) {
-        Optional<IndividualSecuritiesAccount> optionalAccount = repository.findById(dto.getId());
+    public CorporateSecuritiesAccount reportAccountLoss(CorporateSecuritiesAccountDTO dto) {
+    Optional<CorporateSecuritiesAccount> optionalAccount = repository.findById(dto.getId());
         if (optionalAccount.isEmpty()) {
             throw new ResourceNotFoundException("securities", "[id: " + dto.getId() + "]");
         }
-        IndividualSecuritiesAccount account = optionalAccount.get();
+        CorporateSecuritiesAccount account = optionalAccount.get();
         if (account.getStatus() == AccountStatus.SUSPENDED) {
             throw new IllegalStateException("The account is already reported as lost.");
         }
@@ -232,13 +224,13 @@ public class IndividualSecuritiesAccountService implements SecuritiesAccountServ
     @Override
     @Transactional
     @ServiceLog
-    public IndividualSecuritiesAccount restoreAccount(IndividualSecuritiesAccountDTO dto) {
-        Optional<IndividualSecuritiesAccount> optionalAccount = repository.findById(dto.getId());
+    public CorporateSecuritiesAccount restoreAccount(CorporateSecuritiesAccountDTO dto) {
+        Optional<CorporateSecuritiesAccount> optionalAccount = repository.findById(dto.getId());
         if (optionalAccount.isEmpty()) {
             throw new ResourceNotFoundException("securities", "[id: " + dto.getId() + "]");
         }
 
-        IndividualSecuritiesAccount account = optionalAccount.get();
+        CorporateSecuritiesAccount account = optionalAccount.get();
         if (account.getStatus() != AccountStatus.SUSPENDED) {
             throw new IllegalStateException("Only suspended accounts can be restored.");
         }
@@ -257,7 +249,7 @@ public class IndividualSecuritiesAccountService implements SecuritiesAccountServ
         // }
 
         account.setStatus(AccountStatus.ACTIVE);
-        return repository.save(account);
+        return repository.save(account);    
     }
 
 

@@ -51,6 +51,12 @@ public class RedisUtils {
         staticRedisTemplate.opsForHash().put(key, field, value);
     }
 
+    public static String hGet(String key, String field) {
+        Object value = staticRedisTemplate.opsForHash().get(key, field);
+        return value != null ? value.toString() : null;
+    }
+    
+
     public static Map<Object, Object> hGetAll(String key) {
         return staticRedisTemplate.opsForHash().entries(key);
     }

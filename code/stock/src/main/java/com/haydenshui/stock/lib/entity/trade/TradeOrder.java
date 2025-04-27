@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
  * Entity class representing a trade order in the system.
@@ -20,8 +21,8 @@ import org.springframework.data.annotation.LastModifiedDate;
  * @version 1.0
  * @since 2025-03-04
  */
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -29,6 +30,7 @@ import org.springframework.data.annotation.LastModifiedDate;
     @Index(name = "idx_securities_account_id", columnList = "securities_account_id"),
     @Index(name = "idx_stock_code", columnList = "stock_code"),
 })
+@EntityListeners(AuditingEntityListener.class)
 public class TradeOrder {
 
     /**
@@ -105,6 +107,7 @@ public class TradeOrder {
      */
     @CreatedDate
     @Column(name = "order_time", nullable = false)
+
     private LocalDateTime orderTime;
 
     /**

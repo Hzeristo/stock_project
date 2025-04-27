@@ -3,6 +3,7 @@ package com.haydenshui.stock.lib.msg;
 import java.time.LocalDateTime;
 
 import com.haydenshui.stock.lib.entity.tcc.TccContext;
+import com.haydenshui.stock.utils.SnowflakeUtils;
 
 import lombok.*;
 
@@ -10,7 +11,10 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TransactionMessage<T> {   
+public class TransactionMessage<T> {  
+    
+    @Builder.Default
+    private String msgXid = SnowflakeUtils.nextIdStr();
 
     private String businessAction;   
     

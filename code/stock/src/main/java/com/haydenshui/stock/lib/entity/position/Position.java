@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -44,6 +45,7 @@ import java.time.LocalDateTime;
         @Index(name = "idx_position_securities_account_id", columnList = "securities_account_id"),
         @Index(name = "idx_position_stock_code", columnList = "stock_code")
 })
+@EntityListeners(AuditingEntityListener.class)
 public class Position {
 
     /**

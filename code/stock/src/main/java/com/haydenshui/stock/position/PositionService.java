@@ -3,7 +3,7 @@ package com.haydenshui.stock.position;
 import org.springframework.stereotype.Service;
 
 import com.haydenshui.stock.lib.annotation.Lock;
-import com.haydenshui.stock.lib.annotation.NoTransactional;
+import com.haydenshui.stock.lib.annotation.LocalTcc;
 import com.haydenshui.stock.lib.annotation.ServiceLog;
 import com.haydenshui.stock.lib.dto.position.PositionTransactionalDTO;
 import com.haydenshui.stock.lib.entity.position.Position;
@@ -44,9 +44,9 @@ public class PositionService {
     }
     
     @Lock(lockKey = "LOCK:TCC:POSITION:{positionDTO.id}")
-    @NoTransactional
+    @LocalTcc
     public void tradeUpdatePosition(TccContext context, PositionTransactionalDTO positionDTO) {
-        String xid = context.getXid();
+        String xid = context.getCtxXid();
         String freezeKey = "TCC:" + xid + ":position:" + positionDTO.getId() + ":freeze";
     
         if (RedisUtils.hasKey(freezeKey)) {
@@ -74,9 +74,9 @@ public class PositionService {
     
 
     @Lock(lockKey = "LOCK:TCC:POSITION:{positionDTO.id}")
-    @NoTransactional
+    @LocalTcc
     public boolean commitTradeUpdatePosition(TccContext context, PositionTransactionalDTO positionDTO) {
-        String xid = context.getXid();
+        String xid = context.getCtxXid();
         String freezeKey = "TCC:" + xid + ":position:" + positionDTO.getId() + ":freeze";
         String commitKey = "TCC:" + xid + ":position:" + positionDTO.getId() + ":commit";
     
@@ -121,9 +121,9 @@ public class PositionService {
 
     
     @Lock(lockKey = "LOCK:TCC:POSITION:{positionDTO.id}")
-    @NoTransactional
+    @LocalTcc
     public void rollbackTradeUpdatePosition(TccContext context, PositionTransactionalDTO positionDTO) {
-        String xid = context.getXid();
+        String xid = context.getCtxXid();
         String freezeKey = "TCC:" + xid + ":position:" + positionDTO.getId() + ":freeze";
         String cancelKey = "TCC:" + xid + ":position:" + positionDTO.getId() + ":cancel";
     
@@ -134,7 +134,7 @@ public class PositionService {
         Position position = repository.findById(positionDTO.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("position", "[id: " + positionDTO.getId() + "]"));
     
-        int freezeAmount = Integer.parseInt(RedisUtils.get(freezeKey));
+        int freezeAmount = context.get("freezeAmount", Integer.class);
         position.setFrozenQuantity(position.getFrozenQuantity() - freezeAmount);
         repository.save(position);
 

@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConfigurationProperties(prefix = "snowflake")
 public class SnowflakeConfig {
+    
     private long workerId;
 
     // Getter and Setter methods

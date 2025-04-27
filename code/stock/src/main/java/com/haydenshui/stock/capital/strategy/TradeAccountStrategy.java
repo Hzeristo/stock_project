@@ -9,12 +9,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.haydenshui.stock.capital.CapitalAccountRepository;
 import com.haydenshui.stock.lib.annotation.Lock;
-import com.haydenshui.stock.lib.annotation.NoTransactional;
+import com.haydenshui.stock.lib.annotation.LocalTcc;
 import com.haydenshui.stock.lib.dto.capital.CapitalAccountDTO;
 import com.haydenshui.stock.lib.dto.capital.CapitalAccountTransactionDTO;
 import com.haydenshui.stock.lib.entity.account.CapitalAccount;
 import com.haydenshui.stock.lib.entity.account.CapitalAccountType;
 import com.haydenshui.stock.lib.entity.tcc.TccContext;
+import com.haydenshui.stock.lib.exception.ResourceInsufficientException;
 import com.haydenshui.stock.lib.exception.ResourceNotFoundException;
 import com.haydenshui.stock.utils.RedisUtils;
 
@@ -66,9 +67,9 @@ public class TradeAccountStrategy extends AbstractCapitalAccountStrategy {
 
     @Override
     @Lock(lockKey = "LOCK:TCC:CAPITAL:{capitalDTO.capitalAccountId}")
-    @NoTransactional
+    @LocalTcc
     public void freezeAmount(TccContext context, CapitalAccountTransactionDTO capitalDTO) {
-        String xid = context.getXid();
+        String xid = context.getCtxXid();
         String freezeKey = "TCC:" + xid + ":capital:" + capitalDTO.getId() + ":freeze";
 
         if (RedisUtils.hasKey(freezeKey)) {
@@ -80,7 +81,7 @@ public class TradeAccountStrategy extends AbstractCapitalAccountStrategy {
 
         BigDecimal freezeAmount = capitalDTO.getAmount();
         if (capitalAccount.getAvailableBalance().compareTo(freezeAmount) < 0) {
-            throw new ResourceNotFoundException("capitalAccount", "[id: " + capitalDTO.getId() + "]");
+            throw new ResourceInsufficientException("capitalAccount", "[id: " + capitalDTO.getId() + "]", "Freeze");
         }
 
         capitalAccount.setAvailableBalance(
@@ -101,9 +102,9 @@ public class TradeAccountStrategy extends AbstractCapitalAccountStrategy {
     }
 
     @Lock(lockKey = "LOCK:TCC:CAPITAL:{capitalDTO.capitalAccountId}")
-    @NoTransactional
-    public boolean commitfreezeAmount(TccContext context, CapitalAccountTransactionDTO capitalDTO) {
-        String xid = context.getXid();
+    @LocalTcc
+    public boolean commitConsumeAmount(TccContext context, CapitalAccountTransactionDTO capitalDTO) {
+        String xid = context.getCtxXid();
         String freezeKey = "TCC:" + xid + ":capital:" + capitalDTO.getId() + ":freeze";
         String commitKey = "TCC:" + xid + ":capital:" + capitalDTO.getId() + ":commit";
         String cancelKey = "TCC:" + xid + ":capital:" + capitalDTO.getId() + ":cancel";
@@ -139,9 +140,9 @@ public class TradeAccountStrategy extends AbstractCapitalAccountStrategy {
     }
 
     @Lock(lockKey = "LOCK:TCC:CAPITAL:{capitalDTO.capitalAccountId}")
-    @NoTransactional
-    public void rollbackfreezeAmount(TccContext context, CapitalAccountTransactionDTO capitalDTO) {
-        String xid = context.getXid();
+    @LocalTcc
+    public void rollbackFreezeAmountGlobal(TccContext context, CapitalAccountTransactionDTO capitalDTO) {
+        String xid = context.getCtxXid();
         String freezeKey = "TCC:" + xid + ":capital:" + capitalDTO.getId() + ":freeze";
         String cancelKey = "TCC:" + xid + ":capital:" + capitalDTO.getId() + ":cancel";
     
@@ -153,16 +154,18 @@ public class TradeAccountStrategy extends AbstractCapitalAccountStrategy {
             .orElseThrow(() -> new ResourceNotFoundException("capitalAccount", "[id: " + capitalDTO.getId() + "]"));
     
         BigDecimal freezeAmount = context.get("freezeAmount", BigDecimal.class);
-        capitalAccount.setAvailableBalance(
-            freezeAmount.compareTo(BigDecimal.ZERO) == 1 ? 
-            capitalAccount.getAvailableBalance() : 
-            capitalAccount.getAvailableBalance().subtract(freezeAmount)//neg
-        );
-        capitalAccount.setFrozenBalance(
-            freezeAmount.compareTo(BigDecimal.ZERO) == 1 ? 
-            capitalAccount.getFrozenBalance() :
-            capitalAccount.getFrozenBalance().add(freezeAmount)
-        );
+        if (freezeAmount != null) {
+            capitalAccount.setAvailableBalance(
+                freezeAmount.compareTo(BigDecimal.ZERO) == 1 ? 
+                capitalAccount.getAvailableBalance() : 
+                capitalAccount.getAvailableBalance().subtract(freezeAmount)//neg
+            );
+            capitalAccount.setFrozenBalance(
+                freezeAmount.compareTo(BigDecimal.ZERO) == 1 ? 
+                capitalAccount.getFrozenBalance() :
+                capitalAccount.getFrozenBalance().add(freezeAmount)
+            );
+        }
         capitalAccountRepository.save(capitalAccount);
     
         RedisUtils.delete(freezeKey);

@@ -1,30 +1,62 @@
 package com.haydenshui.stock.securities;
 
+import org.springframework.stereotype.Service;
+
+import com.haydenshui.stock.lib.dto.capital.CapitalCheckDTO;
 import com.haydenshui.stock.lib.dto.securities.SecuritiesAccountDTO;
 import com.haydenshui.stock.lib.entity.account.*;
+import com.haydenshui.stock.securities.strategy.SecuritiesAccountStrategyFactory;
 
-import java.util.Optional;
+@Service
+public class SecuritiesAccountService {
 
-public interface SecuritiesAccountService<T extends SecuritiesAccount, D extends SecuritiesAccountDTO> {
+    private final SecuritiesAccountStrategyFactory strategyFactory;
 
-    T createAccount(D dto);
+    public SecuritiesAccountService(SecuritiesAccountStrategyFactory strategyFactory) {
+        this.strategyFactory = strategyFactory;
+    }
 
-    T getAccountById(Long id);
+    public SecuritiesAccount createAccount(SecuritiesAccountDTO dto) {
+        return strategyFactory.getStrategy(dto.getType()).createAccount(dto);
+    }
 
-    T getAccountByAccountNumber(String accountNumber);
+    public SecuritiesAccount getAccountById(Long id, String type) {
+        return strategyFactory.getStrategy(type).getAccountById(id);
+    }
 
-    T getAccountByIdCardNo(String idCardNo);
+    public SecuritiesAccount getAccountByAccountNumber(String accountNumber, String type) {
+        return strategyFactory.getStrategy(type).getAccountByAccountNumber(accountNumber);
+    }
 
-    T updateAccount(D dto);
+    public SecuritiesAccount getAccountByIdCardNo(String idCardNo, String type) {
+        return strategyFactory.getStrategy(type).getAccountByIdCardNo(idCardNo);
+    }
 
-    T updateAccount(T account);
+    public SecuritiesAccount updateAccount(SecuritiesAccountDTO dto) {
+        return strategyFactory.getStrategy(dto.getType()).updateAccount(dto);
+    }
 
-    void tryDisableAccount(D dto);
+    public SecuritiesAccount updateAccount(SecuritiesAccount account) {
+        return strategyFactory.getStrategy(account.getType()).updateAccount(account);
+    }
 
-    void tryDisableAccount(T account);
+    public void tryDisableAccount(SecuritiesAccountDTO dto) {
+        strategyFactory.getStrategy(dto.getType()).tryDisableAccount(dto);
+    }
 
-    T reportAccountLoss(D dto);
+    public void tryDisableAccount(SecuritiesAccount account) {
+        strategyFactory.getStrategy(account.getType()).tryDisableAccount(account);
+    }
 
-    T restoreAccount(D dto);
+    public SecuritiesAccount confirmDisableAccount(CapitalCheckDTO dto) {
+        return strategyFactory.getStrategy(dto.getType()).confirmDisableAccount(dto);
+    }
 
+    public SecuritiesAccount reportAccountLoss(SecuritiesAccountDTO dto) {
+        return strategyFactory.getStrategy(dto.getType()).reportAccountLoss(dto);
+    }
+
+    public SecuritiesAccount restoreAccount(SecuritiesAccountDTO dto) {
+        return strategyFactory.getStrategy(dto.getType()).restoreAccount(dto);
+    }
 }

@@ -38,7 +38,7 @@ public class PositionListener implements RocketMQListener<MessageExt> {
                     "trade",
                     RocketMQConstants.TOPIC_TRADE,
                     RocketMQConstants.TAG_TRADE_CONFIRM,
-                    tmsg.getContext().getXid(),
+                    tmsg.getMsgXid(),
                     JSON.toJSONString(tmsg)
                 );    
             }
@@ -61,7 +61,6 @@ public class PositionListener implements RocketMQListener<MessageExt> {
         Consumer<TransactionMessage<PositionTransactionalDTO>> handler = tagHandlerMap.get(tag);
         if (handler == null) 
             throw new IllegalArgumentException("Unsupported tag: " + tag);
-    
         try {
             handler.accept(tmsg);
         } catch (Exception e) {
@@ -76,7 +75,7 @@ public class PositionListener implements RocketMQListener<MessageExt> {
                 "position",
                 RocketMQConstants.TOPIC_POSITION,
                 RocketMQConstants.TAG_TRADE_CANCEL,
-                tmsg.getContext().getXid(),
+                tmsg.getMsgXid(),
                 JSON.toJSONString(tmsg)
             );
         }

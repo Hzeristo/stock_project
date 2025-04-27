@@ -19,27 +19,15 @@ import com.haydenshui.stock.lib.msg.TransactionMessage;
 @RocketMQMessageListener(topic = RocketMQConstants.TOPIC_SECURITIES, consumerGroup = RocketMQConstants.CONSUMER_SECURITIES)
 public class SecuritiesListener implements RocketMQListener<MessageExt> {
     
-    private final IndividualSecuritiesAccountService individualSecuritiesAccountService;
-
-    private final CorporateSecuritiesAccountService corporateSecuritiesAccountService;
+    private final SecuritiesAccountService securitiesAccountService;
 
     private final Map<String, Consumer<TransactionMessage<CapitalCheckDTO>>> tagHandlerMap;
 
-    public SecuritiesListener(IndividualSecuritiesAccountService individualSecuritiesAccountService, 
-            CorporateSecuritiesAccountService corporateSecuritiesAccountService) {
-        this.individualSecuritiesAccountService = individualSecuritiesAccountService;
-        this.corporateSecuritiesAccountService = corporateSecuritiesAccountService;
+    public SecuritiesListener(SecuritiesAccountService securitiesAccountService) {
+        this.securitiesAccountService = securitiesAccountService;
         this.tagHandlerMap = new HashMap<>();
         this.tagHandlerMap.put(RocketMQConstants.TAG_CAPITAL_VALIDITY_CONFIRM, tmsg -> {
-            String type = tmsg.getPayload().getType();
-            if(type.equals("individual")) {
-                individualSecuritiesAccountService.confirmDisableAccount(tmsg.getPayload());
-            } else if(type.equals("corporate")) {
-                corporateSecuritiesAccountService.confirmDisableAccount(tmsg.getPayload());
-            } else {
-                throw new IllegalArgumentException("Unknown account type: " + type);
-
-            }
+            securitiesAccountService.confirmDisableAccount(tmsg.getPayload());
         });
     }
 
@@ -53,9 +41,10 @@ public class SecuritiesListener implements RocketMQListener<MessageExt> {
             new TypeReference<>() {}
         );
     
-        Consumer<TransactionMessage<CapitalCheckDTO>> handler = tagHandlerMap.get(tag);
-        if (handler == null) throw new IllegalArgumentException("Unsupported tag: " + tag);
-
+        Consumer<TransactionMessage<CapitalCheckDTO>>handler = tagHandlerMap.get(tag);
+        if (handler == null) {
+            throw new IllegalArgumentException("Unsupported tag: " + tag);
+        }
         try {
             handler.accept(tmsg);
         } catch (Exception e) {
