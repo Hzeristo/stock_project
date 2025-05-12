@@ -31,7 +31,7 @@
             <el-option
               v-for="stock in availableStocks"
               :key="stock.code"
-              :label="`${stock.name}（${stock.code}）`"
+              :label="`${stock.name}(${stock.code})`"
               :value="stock.code"
             />
           </el-select>
