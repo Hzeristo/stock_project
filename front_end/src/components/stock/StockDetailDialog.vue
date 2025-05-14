@@ -1,19 +1,22 @@
 <template>
-  <el-dialog
-    :model-value="visible"
-    @update:model-value="$emit('update:visible', $event)"
-    :title="`${stock.name} (${stock.code})`"
-    width="60%"
-    class="stock-detail-dialog"
-    :before-close="handleClose"
-  >
-    <div class="stock-detail-content">
-      <div class="price-overview">
+  <teleport to="body">
+    <el-dialog
+      :model-value="visible"
+      @update:model-value="$emit('update:visible', $event)"
+      :title="stock && stock.name ? `${stock.name} (${stock.code})` : '股票详情'"
+      width="60%"
+      class="stock-detail-dialog"
+      :before-close="handleClose"
+      append-to-body
+      destroy-on-close
+    >
+    <div class="stock-detail-content">      <div class="price-overview">
         <div class="current-price">
-          <span class="price">{{ stock.currentPrice || '--' }}</span>
-          <span :class="{'change-up': stock.change > 0, 'change-down': stock.change < 0}" class="change">
+          <span class="price">{{ stock && stock.currentPrice || '--' }}</span>
+          <span v-if="stock && stock.change !== undefined" :class="{'change-up': stock.change > 0, 'change-down': stock.change < 0}" class="change">
             {{ stock.change > 0 ? '+' : '' }}{{ stock.change }}%
           </span>
+          <span v-else class="change">--</span>
         </div>
         <div class="trading-date">
           {{ getTodayDate() }} 交易时段
@@ -65,7 +68,8 @@
         </el-button>
       </div>
     </div>
-  </el-dialog>
+      </el-dialog>
+  </teleport>
 </template>
 
 <script>
@@ -78,15 +82,16 @@ export default {
     Sell,
     Bell,
     Star
-  },
-  props: {
+  },  props: {
     visible: {
       type: Boolean,
-      required: true
+      required: true,
+      default: false
     },
     stock: {
       type: Object,
-      required: true
+      required: true,
+      default: () => ({})
     }
   },
   setup() {

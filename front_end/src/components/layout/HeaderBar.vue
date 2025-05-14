@@ -57,19 +57,18 @@
             </template>
           </el-dropdown>
         </div>
-      </div>
-    </div>
-    
-    <!-- 股票详情弹窗 -->
+      </div>    </div>
+      <!-- 股票详情弹窗 -->
     <stock-detail-dialog 
       v-model:visible="stockDialogVisible" 
       :stock="selectedStock" 
+      @close="stockDialogVisible = false"
     />
   </div>
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { Search, Bell, ArrowDown, User, Setting, SwitchButton } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
@@ -110,9 +109,7 @@ export default {
       { name: '小米集团', code: '1810', change: -1.2 },
       { name: '中国石油', code: '601857', change: -0.9 },
       { name: '中国工商银行', code: '601398', change: -0.6 }
-    ];
-
-    // 搜索股票
+    ];    // 搜索股票
     const searchStocks = (queryString, callback) => {
       if (queryString) {
         // 过滤股票名称或代码包含搜索词的股票
@@ -121,42 +118,66 @@ export default {
             stock.name.toLowerCase().includes(queryString.toLowerCase()) || 
             stock.code.includes(queryString)
         );
+        // 确保每个结果都是完整的股票对象
+        console.log('搜索结果:', results);
         callback(results);
       } else {
         callback([]);
       }
-    };
-
-    // 选择股票
+    };    // 选择股票
     const handleStockSelect = (stock) => {
-      showStockDetail(stock);
-      searchText.value = ''; // 清空搜索框
-    };
-
-    // 显示股票详情弹窗
-    const showStockDetail = async (stock) => {
-      try {
-        // 在实际应用中，这里应该调用API获取更详细的股票数据
-        // 模拟获取的数据
-        selectedStock.value = {
-          ...stock,
-          currentPrice: stock.change ? (100 + stock.change).toFixed(2) : '100.00',
-          openPrice: '101.20',
-          prevClosePrice: '100.00',
-          highPrice: '102.50',
-          lowPrice: '99.80',
-          turnover: '1.58亿',
-          volume: '1.58亿',
-          pe: '18.5',
-          pb: '2.3'
-        };
-        
-        stockDialogVisible.value = true;
-      } catch (error) {
-        console.error('获取股票详情失败:', error);
-        ElMessage.error('获取股票详情失败，请稍后再试');
+      console.log('从搜索框选择的股票:', stock);
+      // 清空搜索框
+      searchText.value = ''; 
+      
+      if (!stock || !stock.code) {
+        console.error('选择的股票数据无效');
+        ElMessage.error('选择的股票数据无效');
+        return;
       }
+      
+      // 确保stock对象包含所有必要的属性
+      const completeStock = stockList.find(item => item.code === stock.code);
+      
+      // 准备股票数据
+      const stockData = completeStock ? {
+        ...completeStock,
+        currentPrice: (100 + completeStock.change).toFixed(2),
+        openPrice: '101.20',
+        prevClosePrice: '100.00',
+        highPrice: '102.50',
+        lowPrice: '99.80',
+        turnover: '1.58亿',
+        volume: '1.58亿',
+        pe: '18.5',
+        pb: '2.3'
+      } : {
+        ...stock,
+        change: stock.change || 0,
+        currentPrice: (100 + (stock.change || 0)).toFixed(2),
+        openPrice: '101.20',
+        prevClosePrice: '100.00',
+        highPrice: '102.50',
+        lowPrice: '99.80',
+        turnover: '1.58亿',
+        volume: '1.58亿',
+        pe: '18.5',
+        pb: '2.3'
+      };
+      
+      console.log('准备使用的股票数据:', stockData);
+      
+      // 更新数据并确保视图更新后再显示弹窗
+      selectedStock.value = stockData;
+      
+      nextTick(() => {
+        console.log('nextTick - 设置弹窗显示');
+        stockDialogVisible.value = true;
+      });
     };
+    
+    // 以下是原来的showStockDetail函数，现在已经不需要了
+    // 显示股票详情弹窗    // 原始的showStockDetail函数已被内联到handleStockSelect中
 
     const updateDateTime = () => {
       const now = new Date();
@@ -180,8 +201,14 @@ export default {
       sessionStorage.removeItem('isLoggedIn');
       router.push('/login');
       ElMessage.success('已成功退出登录');
+    };    // 监听弹窗状态变化，用于调试
+    const watchStockDialogVisible = (newVal) => {
+      console.log('stockDialogVisible 变化为:', newVal);
     };
-
+    
+    // 监听对象
+    watch(stockDialogVisible, watchStockDialogVisible);
+    
     onMounted(() => {
       updateDateTime();
       timer = setInterval(updateDateTime, 60000); // 每分钟更新一次
