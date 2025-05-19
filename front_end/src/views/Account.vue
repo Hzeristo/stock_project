@@ -70,7 +70,7 @@
               </template>
               <el-form :model="depositForm" label-width="80px" class="fund-form">
                 <el-form-item label="充值金额">
-                  <el-input v-model="depositForm.amount" type="number" min="0" step="0.01">
+                  <el-input v-model="depositForm.amount" type="number" min="0.01" step="0.01">
                     <template #prefix>¥</template>
                   </el-input>
                 </el-form-item>
@@ -89,7 +89,7 @@
               </template>
               <el-form :model="withdrawForm" label-width="80px" class="fund-form">
                 <el-form-item label="提现金额">
-                  <el-input v-model="withdrawForm.amount" type="number" min="0" step="0.01">
+                  <el-input v-model="withdrawForm.amount" type="number" min="0.01" step="0.01">
                     <template #prefix>¥</template>
                   </el-input>
                 </el-form-item>
@@ -204,8 +204,12 @@ export default {
 
     // 充值处理
     const handleDeposit = () => {
+      if (!depositForm.amount) {
+        ElMessage.warning('请输入充值金额')
+        return
+      }
       const amount = parseFloat(depositForm.amount.replace(',', ''))
-      if (!depositForm.amount || amount <= 0 || (amount * 100) % 1 > 0) {
+      if (amount <= 0 || (amount * 100) % 1 > 0) {
         ElMessage.warning('请输入有效的充值金额')
         return
       }
@@ -220,8 +224,12 @@ export default {
 
     // 提现处理
     const handleWithdraw = () => {
+      if (!withdrawForm.amount) {
+        ElMessage.warning('请输入提现金额')
+        return
+      }
       const amount = parseFloat(withdrawForm.amount.replace(',', ''))
-      if (!withdrawForm.amount || amount <= 0 || (amount * 100) % 1 > 0) {
+      if (amount <= 0 || (amount * 100) % 1 > 0) {
         ElMessage.warning('请输入有效的提现金额')
         return
       }
