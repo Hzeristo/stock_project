@@ -1,10 +1,9 @@
 <template>
-  <teleport to="body">
-    <el-dialog
+  <teleport to="body">    <el-dialog
       :model-value="visible"
       @update:model-value="$emit('update:visible', $event)"
       :title="stock && stock.name ? `${stock.name} (${stock.code})` : '股票详情'"
-      width="60%"
+      :width="dialogWidth"
       class="stock-detail-dialog"
       :before-close="handleClose"
       append-to-body
@@ -73,7 +72,7 @@
 </template>
 
 <script>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Sell, Bell, Star } from '@element-plus/icons-vue';
 
 export default {
@@ -97,16 +96,26 @@ export default {
   setup() {
     const timeRange = ref('day');
 
+    // 响应式弹窗宽度
+    const dialogWidth = computed(() => {
+      if (typeof window !== 'undefined') {
+        const width = window.innerWidth;
+        if (width <= 480) return '98%';
+        if (width <= 768) return '95%';
+        return '60%';
+      }
+      return '60%';
+    });
+
     const getTodayDate = () => {
       const today = new Date();
       const year = today.getFullYear();
       const month = String(today.getMonth() + 1).padStart(2, '0');
       const day = String(today.getDate()).padStart(2, '0');
       return `${year}-${month}-${day}`;
-    };
-
-    return {
+    };    return {
       timeRange,
+      dialogWidth,
       getTodayDate
     };
   },
@@ -275,20 +284,187 @@ export default {
 
 @media (max-width: 768px) {
   .stock-detail-dialog :deep(.el-dialog) {
-    width: 92% !important;
+    width: 95% !important;
+    margin: 5vh auto !important;
   }
-  
-  .action-section {
-    flex-direction: column;
-    gap: 10px;
+
+  .stock-detail-dialog :deep(.el-dialog__header) {
+    padding: 12px 16px;
   }
-  
+
+  .stock-detail-dialog :deep(.el-dialog__title) {
+    font-size: 16px;
+  }
+
+  .stock-detail-dialog :deep(.el-dialog__body) {
+    padding: 16px 20px;
+  }
+
+  .price-overview {
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+  }
+
   .price {
     font-size: 28px;
   }
-  
+
   .change {
     font-size: 16px;
+    padding: 2px 6px;
+  }
+
+  .trading-date {
+    font-size: 13px;
+  }
+
+  .info-table {
+    margin-bottom: 24px;
+  }
+
+  .info-table :deep(.el-descriptions__title) {
+    font-size: 15px;
+    margin-bottom: 12px;
+  }
+
+  .info-table :deep(.el-descriptions) {
+    --el-descriptions-table-border: 1px solid #dcdfe6;
+    --el-descriptions-item-bordered-label-background: #fafafa;
+  }
+
+  .info-table :deep(.el-descriptions__label) {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+
+  .info-table :deep(.el-descriptions__content) {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+
+  .chart-section {
+    margin-top: 24px;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .section-header h3 {
+    font-size: 15px;
+  }
+
+  .price-chart {
+    height: 250px;
+    margin-bottom: 24px;
+  }
+
+  .action-section {
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .action-button {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stock-detail-dialog :deep(.el-dialog) {
+    width: 98% !important;
+    margin: 2vh auto !important;
+    border-radius: 8px;
+  }
+
+  .stock-detail-dialog :deep(.el-dialog__header) {
+    padding: 10px 12px;
+  }
+
+  .stock-detail-dialog :deep(.el-dialog__title) {
+    font-size: 15px;
+  }
+
+  .stock-detail-dialog :deep(.el-dialog__body) {
+    padding: 12px 16px;
+  }
+
+  .price-overview {
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+  }
+
+  .current-price {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .price {
+    font-size: 24px;
+    margin-right: 0;
+  }
+
+  .change {
+    font-size: 14px;
+    padding: 2px 5px;
+  }
+
+  .trading-date {
+    font-size: 12px;
+  }
+
+  .info-table {
+    margin-bottom: 20px;
+  }
+
+  .info-table :deep(.el-descriptions__title) {
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+
+  .info-table :deep(.el-descriptions__label) {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .info-table :deep(.el-descriptions__content) {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .chart-section {
+    margin-top: 20px;
+  }
+
+  .section-header h3 {
+    font-size: 14px;
+  }
+
+  .time-selector :deep(.el-radio-button__inner) {
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+
+  .price-chart {
+    height: 200px;
+    margin-bottom: 20px;
+  }
+
+  .action-section {
+    margin-top: 12px;
+    gap: 8px;
+  }
+
+  .action-button {
+    padding: 10px 16px;
+    font-size: 13px;
   }
 }
 </style>

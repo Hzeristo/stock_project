@@ -346,4 +346,114 @@ export default {
 .el-table {
   margin-top: 20px;
 }
+
+/* 移动端响应式样式 */
+@media screen and (max-width: 768px) {
+  .account-page {
+    padding: 12px;
+  }
+
+  .account-overview {
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px 0;
+  }
+
+  .overview-item {
+    padding: 10px;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+  }
+
+  .overview-item .value {
+    font-size: 20px;
+  }
+
+  .fund-operations {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .fund-operation {
+    width: 100%;
+  }
+
+  .fund-card {
+    max-width: none;
+  }
+
+  .fund-form {
+    padding: 15px;
+  }
+
+  .transactions-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .transactions-title {
+    font-size: 15px;
+  }
+
+  .record-count {
+    font-size: 13px;
+  }
+
+  /* 表格在移动端的优化 */
+  .el-table {
+    font-size: 12px;
+  }
+
+  :deep(.el-table th),
+  :deep(.el-table td) {
+    padding: 8px 4px;
+  }
+
+  :deep(.el-table__header-wrapper) {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  :deep(.el-table__header-wrapper::-webkit-scrollbar) {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .account-page {
+    padding: 8px;
+  }
+
+  .overview-item .label {
+    font-size: 12px;
+  }
+
+  .overview-item .value {
+    font-size: 18px;
+  }
+
+  .fund-form {
+    padding: 10px;
+  }
+
+  .transactions-title {
+    font-size: 14px;
+  }
+
+  .el-table {
+    font-size: 11px;
+  }
+
+  :deep(.el-table th),
+  :deep(.el-table td) {
+    padding: 6px 2px;
+  }
+
+  /* 隐藏一些不重要的列以节省空间 */
+  :deep(.el-table .el-table__cell:nth-child(4)),
+  :deep(.el-table .el-table__cell:nth-child(5)) {
+    display: none;
+  }
+}
 </style>

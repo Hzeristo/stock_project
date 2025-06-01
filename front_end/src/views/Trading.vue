@@ -228,4 +228,76 @@ export default {
   max-width: 400px;
   justify-content: center;
 }
+
+/* 移动端响应式样式 */
+@media screen and (max-width: 768px) {
+  .trading-container {
+    padding: 15px 10px;
+  }
+  
+  .pending-trade-card,
+  .trading-card {
+    margin: 10px 0;
+    max-width: 100%;
+  }
+  
+  .trading-form {
+    padding: 15px;
+  }
+  
+  .el-form-item {
+    max-width: 100%;
+  }
+  
+  .card-header {
+    font-size: 18px;
+  }
+  
+  /* 表格在移动端的优化 */
+  :deep(.el-table) {
+    font-size: 12px;
+  }
+  
+  :deep(.el-table th),
+  :deep(.el-table td) {
+    padding: 8px 4px;
+  }
+  
+  :deep(.el-table__header-wrapper) {
+    overflow-x: auto;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .trading-container {
+    padding: 10px 5px;
+  }
+  
+  .trading-form {
+    padding: 10px;
+  }
+  
+  .card-header {
+    font-size: 16px;
+  }
+  
+  .total-price {
+    font-size: 16px;
+  }
+  
+  /* 手机端表格进一步压缩 */
+  :deep(.el-table) {
+    font-size: 11px;
+  }
+  
+  :deep(.el-table th),
+  :deep(.el-table td) {
+    padding: 6px 2px;
+  }
+  
+  /* 隐藏部分列在极小屏幕上 */
+  :deep(.el-table__column--hidden) {
+    display: none;
+  }
+}
 </style>

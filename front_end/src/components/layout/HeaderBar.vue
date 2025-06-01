@@ -448,15 +448,72 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .header-content {
+    padding: 0 16px;
+    height: 60px;
+  }
+  
+  .left-section {
+    flex: 1;
+    max-width: 200px;
+  }
+  
+  .search-input {
+    width: 100% !important;
+    max-width: 180px;
+  }
+  
   .datetime {
     display: none;
   }
-    .right-section {
-    gap: 24px; /* 在移动设备上也增加间距，但比桌面版小一些 */
+  
+  .user-details {
+    display: none;
   }
-    .header-content {
-    padding: 0 16px; /* 增加移动端的左右内边距，从12px到16px */
-    height: 48px; /* 确保移动端顶栏高度与桌面端一致 */
+  
+  .user-profile {
+    gap: 4px;
+  }
+  
+  .right-section {
+    gap: 16px;
+  }
+  
+  .notification {
+    display: flex;
+    align-items: center;
+  }
+}
+
+/* 手机端进一步优化 */
+@media (max-width: 480px) {
+  .header-content {
+    padding: 0 12px;
+  }
+  
+  .left-section {
+    max-width: 120px;
+  }
+  
+  .search-input {
+    max-width: 120px;
+  }
+  
+  .search-input :deep(.el-input__inner) {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+  
+  .right-section {
+    gap: 12px;
+  }
+  
+  .user-profile {
+    min-width: auto;
+  }
+  
+  .dropdown-icon {
+    display: none;
   }
 }
 </style>

@@ -481,24 +481,190 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .dashboard {
+    padding: 16px 12px;
+  }
+
+  .nav-tabs {
+    margin-bottom: 16px;
+  }
+
+  .tab-item {
+    padding: 10px 12px;
+    margin-right: 16px;
+    font-size: 14px;
+  }
+
   .metrics-panel {
     flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
   }
-  
+
+  .metric-card {
+    border-radius: 12px;
+  }
+
+  .card-header {
+    padding: 14px 16px;
+    font-size: 15px;
+  }
+
+  .metric-content {
+    padding: 20px 16px;
+  }
+
+  .metric-value {
+    font-size: 24px;
+  }
+
+  .section-header h2 {
+    font-size: 18px;
+  }
+
   .ranking-container {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
   }
-  
+
   .ranking-card {
-    margin-bottom: 20px;
+    margin-bottom: 0;
   }
-  
+
+  .ranking-title {
+    padding: 14px 16px;
+    font-size: 15px;
+  }
+
+  .stock-item {
+    padding: 12px 16px;
+  }
+
+  .stock-name {
+    font-size: 14px;
+  }
+
+  .stock-code {
+    font-size: 12px;
+  }
+
+  .stock-change {
+    font-size: 14px;
+    padding: 3px 6px;
+  }
+
+  .message-item {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .message-text {
+    font-size: 13px;
+  }
+
   .el-col {
     width: 100% !important;
     flex: 0 0 100%;
     max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard {
+    padding: 12px 8px;
+  }
+
+  .nav-tabs {
+    margin-bottom: 12px;
+    padding-bottom: 4px;
+  }
+
+  .tab-item {
+    padding: 8px 10px;
+    margin-right: 12px;
+    font-size: 13px;
+    gap: 6px;
+  }
+
+  .metrics-panel {
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .card-header {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .metric-content {
+    padding: 16px 14px;
+  }
+
+  .metric-value {
+    font-size: 20px;
+  }
+
+  .sub-text {
+    font-size: 12px;
+  }
+
+  .section-header {
+    margin-bottom: 16px;
+  }
+
+  .section-header h2 {
+    font-size: 16px;
+  }
+
+  .ranking-container {
+    gap: 12px;
+  }
+
+  .ranking-title {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .stock-item {
+    padding: 10px 14px;
+  }
+
+  .stock-name {
+    font-size: 13px;
+    margin-bottom: 2px;
+  }
+
+  .stock-code {
+    font-size: 11px;
+  }
+
+  .stock-change {
+    font-size: 13px;
+    padding: 2px 5px;
+  }
+
+  .stock-volume {
+    font-size: 13px;
+    padding: 2px 5px;
+  }
+
+  .messages-section {
+    margin-top: 24px;
+  }
+
+  .message-item {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .message-item .el-icon {
+    padding: 6px;
+  }
+
+  .message-text {
+    font-size: 12px;
+    line-height: 1.3;
   }
 }
 </style>

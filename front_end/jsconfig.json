@@ -15,5 +15,15 @@
       "dom.iterable",
       "scripthost"
     ]
-  }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*_backup.*",
+    "**/*_old.*",
+    "**/*_temp.*"
+  ]
 }
