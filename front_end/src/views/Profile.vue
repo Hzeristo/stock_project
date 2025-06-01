@@ -7,7 +7,7 @@
           <el-descriptions
             title="个人信息"
             :column="1"
-            border
+             border
             class="info-descriptions"
           >
             <el-descriptions-item label="用户名">
@@ -97,6 +97,7 @@
 import { ref } from 'vue';
 import { ElMessage } from 'element-plus';
 import { View, Hide, User, Message, Phone } from '@element-plus/icons-vue';
+import {useRouter} from 'vue-router';
 
 export default {
   name: 'ProfileView',
@@ -136,9 +137,14 @@ export default {
       ElMessage.success('密码修改成功！');
     };
 
-    const logout = () => {
-      console.log('用户登出');
-    };
+    // const logout = () => {
+    //   console.log('用户登出');
+    // };
+    const router = useRouter();
+    function logout() {
+    sessionStorage.removeItem('isLoggedIn')
+    router.push('/Dashboard')    
+    }
 
     return {
       activeTab,

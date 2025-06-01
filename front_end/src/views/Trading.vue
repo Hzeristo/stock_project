@@ -31,7 +31,7 @@
             <el-option
               v-for="stock in availableStocks"
               :key="stock.code"
-              :label="`${stock.name}（${stock.code}）`"
+              :label="`${stock.name}(${stock.code})`"
               :value="stock.code"
             />
           </el-select>
@@ -45,7 +45,7 @@
         </el-form-item>
 
         <el-form-item label="单价（¥）">
-          <el-input-number v-model="tradeForm.price" :min="0" :step="0.01" style="width: 240px" />
+          <el-input-number v-model="tradeForm.price" :min="0.01" :step="0.01" style="width: 240px" />
         </el-form-item>
 
         <el-form-item label="数量">
@@ -109,6 +109,14 @@ export default {
       const { stockCode, price, quantity, password } = tradeForm.value
       if (!stockCode || !price || !quantity || !password) {
         ElMessage.warning('请填写完整交易信息')
+        return
+      }
+      if ((price * 100) % 1 > 0) {
+        ElMessage.warning('请输入有效的单价')
+        return
+      }
+      if (quantity % 1 > 0) {
+        ElMessage.warning('请输入有效的数量')
         return
       }
       if (password !== '123456') {

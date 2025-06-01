@@ -10,14 +10,14 @@
     <!-- 指标卡片区域 -->
     <div class="metrics-panel">
       <div class="metric-card" style="background-color: #8a9a9e;">
-        <div class="card-header">涨停停对比</div>
+        <div class="card-header">涨跌停对比</div>
         <div class="metric-content">
           <div class="metric-value">28 : 45</div>
         </div>
       </div>
       
       <div class="metric-card" style="background-color: #b19795;">
-        <div class="card-header">昨日表现</div>
+        <div class="card-header">昨日涨停表现</div>
         <div class="metric-content">
           <div class="metric-value">0.8%</div>
         </div>
@@ -36,7 +36,6 @@
     <div class="stock-ranking-section">
       <div class="section-header">
         <h2>股票排行</h2>
-        <el-button type="primary" plain class="compare-btn">涨跌等待比</el-button>
       </div>
 
       <el-row :gutter="20" class="ranking-container">
@@ -45,7 +44,7 @@
           <div class="ranking-card">
             <div class="ranking-title">涨幅榜</div>
             <div class="stock-list">
-              <div v-for="(stock, index) in topGainers" :key="index" class="stock-item">
+              <div v-for="(stock, index) in topGainers" :key="index" class="stock-item" @click="showStockDetail(stock)">
                 <div class="stock-info">
                   <div class="stock-name">{{ stock.name }}</div>
                   <div class="stock-code">{{ stock.code }}</div>
@@ -61,7 +60,7 @@
           <div class="ranking-card">
             <div class="ranking-title">跌幅榜</div>
             <div class="stock-list">
-              <div v-for="(stock, index) in topLosers" :key="index" class="stock-item">
+              <div v-for="(stock, index) in topLosers" :key="index" class="stock-item" @click="showStockDetail(stock)">
                 <div class="stock-info">
                   <div class="stock-name">{{ stock.name }}</div>
                   <div class="stock-code">{{ stock.code }}</div>
@@ -77,7 +76,7 @@
           <div class="ranking-card">
             <div class="ranking-title">成交额榜</div>
             <div class="stock-list">
-              <div v-for="(stock, index) in topVolume" :key="index" class="stock-item">
+              <div v-for="(stock, index) in topVolume" :key="index" class="stock-item" @click="showStockDetail({...stock, change: 0})">
                 <div class="stock-info">
                   <div class="stock-name">{{ stock.name }}</div>
                   <div class="stock-code">{{ stock.code }}</div>
@@ -102,18 +101,27 @@
         </div>
       </div>
     </div>
+
+    <!-- 股票详情弹窗 -->
+    <stock-detail-dialog 
+      v-model:visible="stockDialogVisible" 
+      :stock="selectedStock" 
+    />
   </div>
 </template>
 
 <script>
 import { ref } from 'vue';
 import { Bell, Promotion } from '@element-plus/icons-vue';
+import StockDetailDialog from '@/components/stock/StockDetailDialog.vue';
+import { ElMessage } from 'element-plus';
 
 export default {
   name: 'DashboardView',
   components: {
     Bell,
-    Promotion
+    Promotion,
+    StockDetailDialog
   },
   setup() {
     const topGainers = ref([
@@ -148,11 +156,45 @@ export default {
       'message5: 部分科技股估值进入合理区间，可逢低关注'
     ]);
 
+    // 股票详情弹窗相关
+    const stockDialogVisible = ref(false);
+    const selectedStock = ref({});
+
+    // 显示股票详情弹窗
+    const showStockDetail = async (stock) => {
+      try {
+        // 在实际应用中，这里应该调用API获取更详细的股票数据
+        // const { data } = await stockApi.getStockInfo(stock.code);
+        // selectedStock.value = { ...stock, ...data };
+        
+        // 模拟获取的数据
+        selectedStock.value = {
+          ...stock,
+          currentPrice: stock.change ? (100 + stock.change).toFixed(2) : '100.00',
+          openPrice: '101.20',
+          prevClosePrice: '100.00',
+          highPrice: '102.50',
+          lowPrice: '99.80',
+          turnover: stock.volume || '1.58亿',
+          pe: '18.5',
+          pb: '2.3'
+        };
+        
+        stockDialogVisible.value = true;
+      } catch (error) {
+        console.error('获取股票详情失败:', error);
+        ElMessage.error('获取股票详情失败，请稍后再试');
+      }
+    };
+
     return {
       topGainers,
       topLosers,
       topVolume,
-      messages
+      messages,
+      stockDialogVisible,
+      selectedStock,
+      showStockDetail
     };
   }
 };
@@ -334,13 +376,14 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 18px;
-  border-bottom: 1px solid #f5f7fa;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   transition: background-color 0.2s ease;
+  cursor: pointer;
 }
 
 .stock-item:hover {
-  background-color: rgba(0, 0, 0, 0.01);
+  background-color: rgba(64, 158, 255, 0.05);
 }
 
 .stock-item:last-child {
