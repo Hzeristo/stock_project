@@ -2,7 +2,7 @@ package com.haydenshui.stock.lib.util;
 
 public class SnowflakeIdGenerator {
 
-    // 2020-01-01 00:00:00
+    // 自定义起始时间戳（2020-01-01 00:00:00）
     private static final long START_TIMESTAMP = 1609459200000L;
 
     private static final long WORKER_ID_BITS = 5L;
@@ -15,20 +15,28 @@ public class SnowflakeIdGenerator {
     private static final long WORKER_ID_LEFT_SHIFT = SEQUENCE_BITS;
 
     private long sequence = 0L;
-
     private long lastTimestamp = -1L;
 
     private final long workerId;
 
     public SnowflakeIdGenerator(long workerId) {
         if (workerId < 0 || workerId > MAX_WORKER_ID) {
-            throw new IllegalArgumentException(String.format("Worker ID can't be greater than %d or less than 0", MAX_WORKER_ID));
+            throw new IllegalArgumentException(
+                    String.format("Worker ID can't be greater than %d or less than 0", MAX_WORKER_ID));
         }
         this.workerId = workerId;
     }
 
     private long getCurrentTimestamp() {
         return System.currentTimeMillis();
+    }
+
+    private long waitForNextMillis(long lastTimestamp) {
+        long timestamp = getCurrentTimestamp();
+        while (timestamp <= lastTimestamp) {
+            timestamp = getCurrentTimestamp();
+        }
+        return timestamp;
     }
 
     public synchronized long generateId() {
@@ -39,12 +47,12 @@ public class SnowflakeIdGenerator {
         }
 
         if (timestamp == lastTimestamp) {
-            sequence = (sequence + 1) & MAX_SEQUENCE;  
+            sequence = (sequence + 1) & MAX_SEQUENCE;
             if (sequence == 0) {
-                timestamp = waitForNextMillis(lastTimestamp); 
+                timestamp = waitForNextMillis(lastTimestamp);
             }
         } else {
-            sequence = 0L; 
+            sequence = 0L;
         }
 
         lastTimestamp = timestamp;
@@ -54,11 +62,15 @@ public class SnowflakeIdGenerator {
                 | sequence;
     }
 
-    private long waitForNextMillis(long lastTimestamp) {
-        long timestamp = getCurrentTimestamp();
-        while (timestamp <= lastTimestamp) {
-            timestamp = getCurrentTimestamp();
-        }
-        return timestamp;
+    public long nextId() {
+        return generateId();
+    }
+
+    public String nextIdStr() {
+        return String.valueOf(generateId());
+    }
+
+    public long getWorkerId() {
+        return workerId;
     }
 }

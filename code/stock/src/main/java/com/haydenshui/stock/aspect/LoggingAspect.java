@@ -17,6 +17,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import com.haydenshui.stock.securities.security.SecuritySecuritiesAccount;
+
 import jakarta.servlet.http.HttpServletRequest;
 
 @Aspect
@@ -48,9 +50,8 @@ public class LoggingAspect {
     public Object logMethodDetails(ProceedingJoinPoint joinPoint) throws Throwable {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
 
-        // 获取用户ID（前提是已经通过JWT或登录认证设置到SecurityContext）
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Long userId = principal instanceof Long ? (Long) principal : null;
+        Long userId = principal instanceof SecuritySecuritiesAccount ? ((SecuritySecuritiesAccount) principal).getId() : null;
 
         String methodName = joinPoint.getSignature().getName();
         String httpMethod = request.getMethod();
@@ -79,7 +80,7 @@ public class LoggingAspect {
     public void logException(JoinPoint joinPoint, Throwable ex) {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Long userId = principal instanceof Long ? (Long) principal : null;
+        Long userId = principal instanceof SecuritySecuritiesAccount ? ((SecuritySecuritiesAccount) principal).getId() : null;
 
         String methodName = joinPoint.getSignature().getName();
         String httpMethod = request.getMethod();
@@ -97,13 +98,32 @@ public class LoggingAspect {
             userId, ip, httpMethod, uri, methodName, argsStr, ex.getMessage()
         );
 
-        //TODO: add conditions
+        controlLogger.error(logMessage, ex);
+
     }
 
     @Around("serviceLogMethods()")
-    public Object logServiceMethod(ProceedingJoinPoint joinPoint) throws Throwable {
-        //TODO: Auto-generated method stub
-        throw new UnsupportedOperationException("Not implemented");
+        public Object logServiceMethod(ProceedingJoinPoint joinPoint) throws Throwable {
+            String className = joinPoint.getTarget().getClass().getSimpleName();
+        String methodName = joinPoint.getSignature().getName();
+        Object[] args = joinPoint.getArgs();
+
+        long startTime = System.currentTimeMillis();
+
+        try {
+            serviceLogger.info(" [Service] {}.{} called with args: {}", className, methodName, Arrays.toString(args));
+
+            Object result = joinPoint.proceed();
+
+            long endTime = System.currentTimeMillis();
+            serviceLogger.info(" [Service] {}.{} finished in {} ms", className, methodName, (endTime - startTime));
+
+            return result;
+        } catch (Throwable e) {
+            long errorTime = System.currentTimeMillis();
+            serviceLogger.warn("[Service] {}.{} threw exception after {} ms: {}", className, methodName, (errorTime - startTime), e.getMessage(), e);
+            throw e;
+        }
     }
 
 }

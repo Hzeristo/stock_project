@@ -67,7 +67,6 @@ public class CapitalAccount {
     /**
      * Currency type for this capital account.
      */
-    @Enumerated(EnumType.STRING)
     @Column(name = "currency", nullable = false)
     private String currency;
 

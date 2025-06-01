@@ -5,6 +5,10 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 /**
  * Entity class representing a trade order in the system.
  *
@@ -17,8 +21,8 @@ import java.time.LocalDateTime;
  * @version 1.0
  * @since 2025-03-04
  */
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -26,6 +30,7 @@ import java.time.LocalDateTime;
     @Index(name = "idx_securities_account_id", columnList = "securities_account_id"),
     @Index(name = "idx_stock_code", columnList = "stock_code"),
 })
+@EntityListeners(AuditingEntityListener.class)
 public class TradeOrder {
 
     /**
@@ -100,7 +105,17 @@ public class TradeOrder {
      * The timestamp when the order was created.
      * This records the exact time when the order was placed in the system.
      */
+    @CreatedDate
     @Column(name = "order_time", nullable = false)
+
     private LocalDateTime orderTime;
+
+    /**
+     * The timestamp when the order was executed or completed.
+     * This records the exact time when the order was filled or completed.
+     */
+    @LastModifiedDate
+    @Column(name = "transaction_time")
+    private LocalDateTime transactionTime;
 
 }

@@ -6,6 +6,9 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 /**
  * Represents a trade execution in the trading system.
  *
@@ -26,6 +29,7 @@ import java.time.LocalDateTime;
     @Index(name = "idx_trade_execution_securities_account_id", columnList = "securities_account_id"),
     @Index(name = "idx_trade_execution_capital_account_id", columnList = "capital_account_id")
 })
+@EntityListeners(AuditingEntityListener.class)
 public class TradeExecution {
 
     /**
@@ -75,6 +79,7 @@ public class TradeExecution {
      * The timestamp when the trade was executed.
      * This field captures the exact time of the trade execution.
      */
+    @CreatedDate
     @Column(name = "execution_time", nullable = false)
     private LocalDateTime executionTime;
 

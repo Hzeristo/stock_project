@@ -74,6 +74,11 @@ public abstract class SecuritiesAccountDTO {
     private String status;
 
     /**
+     * The type of the securities account.
+     */
+    private String type;
+
+    /**
      * A list of capital account DTOs associated with the securities account.
      */
     private List<Long> capitalAccountIds;

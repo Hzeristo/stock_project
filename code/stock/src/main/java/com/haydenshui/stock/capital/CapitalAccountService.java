@@ -1,15 +1,14 @@
 package com.haydenshui.stock.capital;
 
-import java.util.Optional;
-
-import org.apache.seata.rm.tcc.api.BusinessActionContext;
 import org.springframework.stereotype.Service;
 
 import com.haydenshui.stock.capital.strategy.CapitalAccountStrategyFactory;
+import com.haydenshui.stock.lib.dto.CheckDTO;
 import com.haydenshui.stock.lib.dto.capital.CapitalAccountDTO;
 import com.haydenshui.stock.lib.dto.capital.CapitalAccountTransactionDTO;
 import com.haydenshui.stock.lib.entity.account.CapitalAccount;
 import com.haydenshui.stock.lib.entity.account.CapitalAccountType;
+import com.haydenshui.stock.lib.entity.tcc.TccContext;
 
 @Service
 public class CapitalAccountService {
@@ -20,44 +19,50 @@ public class CapitalAccountService {
         this.strategyFactory = strategyFactory;
     }
 
-    public Optional<CapitalAccount> createAccount(CapitalAccountDTO dto, CapitalAccountType type) {
-        return strategyFactory.getStrategy(type).createAccount(dto);
+    public CapitalAccount createAccount(CapitalAccountDTO dto) {
+        return strategyFactory.getStrategy(CapitalAccountType.fromString(dto.getType())).createAccount(dto);
     }
 
-    public Optional<CapitalAccount> getAccountById(Long id, CapitalAccountType type) {
-        return strategyFactory.getStrategy(type).getAccountById(id);
+    public CapitalAccount getAccountById(Long id, String type) {
+        return strategyFactory.getStrategy(CapitalAccountType.fromString(type)).getAccountById(id);
     }
 
-    public Optional<CapitalAccount> getAccountByAccountNumber(String accountNumber, CapitalAccountType type) {
-        return strategyFactory.getStrategy(type).getAccountByAccountNumber(accountNumber);
+    public CapitalAccount getAccountByAccountNumber(String accountNumber, String type) {
+        return strategyFactory.getStrategy(CapitalAccountType.fromString(type)).getAccountByAccountNumber(accountNumber);
     }
 
-    public Optional<CapitalAccount> updateAccount(CapitalAccountDTO dto, CapitalAccountType type) {
-        return strategyFactory.getStrategy(type).updateAccount(dto);
+    
+    public boolean disableValidity(CheckDTO payload, String type) {
+        return strategyFactory.getStrategy(CapitalAccountType.fromString(type)).disableValidity(payload);
     }
 
-    public Optional<CapitalAccount> disableAccount(CapitalAccountDTO dto, CapitalAccountType type) {
-        return strategyFactory.getStrategy(type).disableAccount(dto);
+    public CapitalAccount updateAccount(CapitalAccountDTO dto) {
+        return strategyFactory.getStrategy(CapitalAccountType.fromString(dto.getType())).updateAccount(dto);
     }
 
-    public Optional<CapitalAccount> restoreAccount(CapitalAccountDTO dto, CapitalAccountType type) {
-        return strategyFactory.getStrategy(type).restoreAccount(dto);
+    public CapitalAccount disableAccount(CapitalAccountDTO dto) {
+        return strategyFactory.getStrategy(CapitalAccountType.fromString(dto.getType())).disableAccount(dto);
     }
 
-    public Optional<CapitalAccount> reportAccountLoss(CapitalAccountDTO dto, CapitalAccountType type) {
-        return strategyFactory.getStrategy(type).reportAccountLoss(dto);
+    public CapitalAccount restoreAccount(CapitalAccountDTO dto) {
+        return strategyFactory.getStrategy(CapitalAccountType.fromString(dto.getType())).restoreAccount(dto);
     }
 
-    public Optional<CapitalAccount> deposit(CapitalAccountTransactionDTO dto, CapitalAccountType type) {
+    public CapitalAccount reportAccountLoss(CapitalAccountDTO dto) {
+        return strategyFactory.getStrategy(CapitalAccountType.fromString(dto.getType())).reportAccountLoss(dto);
+    }
+
+    public CapitalAccount deposit(CapitalAccountTransactionDTO dto, CapitalAccountType type) {
         return strategyFactory.getStrategy(type).deposit(dto);
     }
 
-    public Optional<CapitalAccount> withdraw(CapitalAccountTransactionDTO dto, CapitalAccountType type) {
+    public CapitalAccount withdraw(CapitalAccountTransactionDTO dto, CapitalAccountType type) {
         return strategyFactory.getStrategy(type).withdraw(dto);
     }
 
-    public boolean freezeAmount(BusinessActionContext context, CapitalAccountTransactionDTO dto, CapitalAccountType type) {
-        return strategyFactory.getStrategy(type).freezeAmount(context, dto);
+    public void freezeAmount(TccContext context, CapitalAccountTransactionDTO dto, CapitalAccountType type) {
+        strategyFactory.getStrategy(type).freezeAmount(context, dto);
     }
+
     
 }

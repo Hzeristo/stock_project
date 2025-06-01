@@ -1,4 +1,4 @@
-package com.haydenshui.stock.trade.execution;
+package com.haydenshui.stock.trade;
 
 import com.haydenshui.stock.lib.entity.trade.TradeExecution;
 import org.springframework.data.jpa.repository.JpaRepository;

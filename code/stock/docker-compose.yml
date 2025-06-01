@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  namesrv:
+    image: apache/rocketmq:latest
+    container_name: rocketmq-namesrv
+    environment:
+      - "JAVA_OPTS=-Duser.home=/root"
+    ports:
+      - "9876:9876"
+    command: sh mqnamesrv
+
+  broker:
+    image: apache/rocketmq:latest
+    container_name: rocketmq-broker
+    environment:
+      - "JAVA_OPTS=-Duser.home=/root"
+      - "NAMESRV_ADDR=namesrv:9876"
+    ports:
+      - "10911:10911"
+    command: sh mqbroker -n namesrv:9876
+    depends_on:
+      - namesrv
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-container
+    environment:
+      - MYSQL_ROOT_PASSWORD=bj0451heb
+      - MYSQL_DATABASE=stock
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./my.cnf:/etc/mysql/my.cnf
+    restart: always
+    init: true
+    
+volumes:
+  mysql-data:

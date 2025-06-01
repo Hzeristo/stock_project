@@ -4,8 +4,9 @@ import com.haydenshui.stock.lib.entity.account.SecuritiesAccount;
 import com.haydenshui.stock.lib.entity.stock.Stock;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -39,11 +40,12 @@ import java.time.LocalDateTime;
 @ToString
 @Entity
 @Table(name = "position", uniqueConstraints = {
-        @UniqueConstraint(name = "uq_position_account_stock", columnNames = {"securities_account_id", "stock_id"})
+        @UniqueConstraint(name = "uq_position_account_stock", columnNames = {"securities_account_id", "stock_code"})
 }, indexes = {
         @Index(name = "idx_position_securities_account_id", columnList = "securities_account_id"),
-        @Index(name = "idx_position_stock_id", columnList = "stock_id")
+        @Index(name = "idx_position_stock_code", columnList = "stock_code")
 })
+@EntityListeners(AuditingEntityListener.class)
 public class Position {
 
     /**
@@ -120,7 +122,7 @@ public class Position {
      * This field automatically records the timestamp when a position is created.
      * </p>
      */
-    @CreationTimestamp
+    @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -130,7 +132,7 @@ public class Position {
      * This field automatically records the timestamp whenever a position is updated.
      * </p>
      */
-    @UpdateTimestamp
+    @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 

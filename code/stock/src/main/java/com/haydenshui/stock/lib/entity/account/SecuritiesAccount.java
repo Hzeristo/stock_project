@@ -88,6 +88,13 @@ public class SecuritiesAccount {
     private AccountStatus status;
 
     /**
+     * The type of the securities account.
+     * This field can be used to distinguish between individual and corporate accounts.
+     */
+    @Column(name = "type", nullable = false)
+    private String type;
+
+    /**
      * A list of capital accounts id associated with this securities account.
      * This is a one-to-many relationship, and all changes to capital accounts are cascaded.
      */

@@ -20,6 +20,7 @@ import java.math.BigDecimal;
  * @version 1.0
  * @since 2025-03-06
  */
+@Builder
 @Getter
 @Setter
 @NoArgsConstructor

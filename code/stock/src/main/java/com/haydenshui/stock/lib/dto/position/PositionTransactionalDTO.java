@@ -6,8 +6,8 @@ import java.time.LocalDateTime;
 
 import lombok.*;
 
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class PositionTransactionalDTO implements Serializable {
@@ -27,6 +27,7 @@ public class PositionTransactionalDTO implements Serializable {
 
     private BigDecimal transactionalPrice;
 
-    private LocalDateTime transactionTime;
+    @Builder.Default
+    private LocalDateTime timestamp = LocalDateTime.now();
 
 }

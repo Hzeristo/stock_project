@@ -1,15 +1,18 @@
 package com.haydenshui.stock.lib.dto.trade;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import lombok.*;
 
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TradeOrderDTO {
+public class TradeOrderDTO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
     
     /**
      * The unique identifier of the trade order.
@@ -62,5 +65,6 @@ public class TradeOrderDTO {
      * The timestamp when the order was placed.
      * The time is stored as a LocalDateTime, representing the exact time of order creation.
      */
-    private LocalDateTime orderTime;
+    @Builder.Default
+    private LocalDateTime timestamp = LocalDateTime.now();
 }
