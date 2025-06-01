@@ -17,6 +17,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import com.haydenshui.stock.securities.security.SecuritySecuritiesAccount;
+
 import jakarta.servlet.http.HttpServletRequest;
 
 @Aspect
@@ -48,9 +50,8 @@ public class LoggingAspect {
     public Object logMethodDetails(ProceedingJoinPoint joinPoint) throws Throwable {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
 
-        // 获取用户ID（前提是已经通过JWT或登录认证设置到SecurityContext）
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Long userId = principal instanceof Long ? (Long) principal : null;
+        Long userId = principal instanceof SecuritySecuritiesAccount ? ((SecuritySecuritiesAccount) principal).getId() : null;
 
         String methodName = joinPoint.getSignature().getName();
         String httpMethod = request.getMethod();
@@ -79,7 +80,7 @@ public class LoggingAspect {
     public void logException(JoinPoint joinPoint, Throwable ex) {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Long userId = principal instanceof Long ? (Long) principal : null;
+        Long userId = principal instanceof SecuritySecuritiesAccount ? ((SecuritySecuritiesAccount) principal).getId() : null;
 
         String methodName = joinPoint.getSignature().getName();
         String httpMethod = request.getMethod();
@@ -97,7 +98,8 @@ public class LoggingAspect {
             userId, ip, httpMethod, uri, methodName, argsStr, ex.getMessage()
         );
 
-        //TODO: add conditions
+        controlLogger.error(logMessage, ex);
+
     }
 
     @Around("serviceLogMethods()")

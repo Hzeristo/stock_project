@@ -10,16 +10,16 @@ import java.lang.reflect.Method;
 
 @Aspect
 @Component
-public class NoTransactionalAspect {
+public class LocalTccAspect {
 
-    @Pointcut("@annotation(com.haydenshui.stock.annotation.NoTransactional)")
+    @Pointcut("@annotation(com.haydenshui.stock.annotation.LocalTcc)")
     public void noTransactionalMethods() {
     }
 
     @Before("noTransactionalMethods()")
     public void checkNoTransactional(Method method) {
         if (method.isAnnotationPresent(Transactional.class)) {
-            throw new IllegalStateException("Method: " + method.getName() + " marked with @NoTransactional cannot be annotated with @Transactional");
+            throw new IllegalStateException("Method: " + method.getName() + " marked with @LocalTcc cannot be annotated with @Transactional");
         }
     }
 }

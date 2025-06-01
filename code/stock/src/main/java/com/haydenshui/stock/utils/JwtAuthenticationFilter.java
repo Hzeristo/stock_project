@@ -1,14 +1,15 @@
 package com.haydenshui.stock.utils;
 
 import java.io.IOException;
-import java.util.ArrayList;
-
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.haydenshui.stock.config.JwtProperties;
+import com.haydenshui.stock.securities.security.SecuritiesUserDetailsService;
+import com.haydenshui.stock.securities.security.SecuritySecuritiesAccount;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -22,8 +23,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     
     private final JwtProperties jwtProperties;
 
-    public JwtAuthenticationFilter(JwtProperties jwtProperties) {
+    private final SecuritiesUserDetailsService securitiesUserDetailsService;
+
+    public JwtAuthenticationFilter(JwtProperties jwtProperties, SecuritiesUserDetailsService securitiesUserDetailsService) {
         this.jwtProperties = jwtProperties;
+        this.securitiesUserDetailsService = securitiesUserDetailsService;
     }
 
     @Override
@@ -34,12 +38,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = authHeader.substring(7);
             try {
                 Claims claims = JwtUtils.parseJWT(jwtProperties.getSecret(), token);
-                Long userId = claims.get("userId", Long.class);
+                String accountNumber = claims.get("accountNumber", String.class);
+                String accountType = claims.get("accountType", String.class);
+                String accNoAndType = accountNumber + ":" + accountType;
+
+                SecuritySecuritiesAccount userDetails = securitiesUserDetailsService.loadUserByUsername(accNoAndType);
 
                 UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(userId, null, new ArrayList<>());
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-            } catch (JwtException e) {
+            } catch (JwtException | UsernameNotFoundException e) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 return;
             }

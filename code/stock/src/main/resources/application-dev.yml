@@ -75,6 +75,7 @@ rocketmq-config:
     trade-create: TRADE_CREATE
     trade-confirm: TRADE_CONFIRM
     trade-cancel: TRADE_CANCEL
+    trade-validity-check: TRADE_VALIDITY_CHECK
     capital-check: CAPITAL_CHECK
     capital-validity-check: CAPITAL_VALIDITY_CHECK
     capital-validity-confirm: CAPITAL_VALIDITY_CONFIRM

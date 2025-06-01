@@ -7,8 +7,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.haydenshui.stock.capital.CapitalAccountRepository;
+import com.haydenshui.stock.lib.dto.CheckDTO;
 import com.haydenshui.stock.lib.dto.capital.CapitalAccountDTO;
-import com.haydenshui.stock.lib.dto.capital.CapitalCheckDTO;
 import com.haydenshui.stock.lib.dto.capital.CapitalMapper;
 import com.haydenshui.stock.lib.entity.account.CapitalAccount;
 import com.haydenshui.stock.lib.exception.ResourceAlreadyExistsException;
@@ -31,7 +31,7 @@ public abstract class AbstractCapitalAccountStrategy implements CapitalAccountSt
     public CapitalAccount createAccount(CapitalAccountDTO dto) {
         Optional<CapitalAccount> existingAccount = capitalAccountRepository.findByCapitalAccountNumber(dto.getCapitalAccountNumber());
         existingAccount.ifPresent(acc -> {
-            throw new ResourceAlreadyExistsException("Capital", acc.getCapitalAccountNumber());
+            throw new ResourceAlreadyExistsException("Capital", "[AccountNumber: " + acc.getCapitalAccountNumber() + "]");
         });
         CapitalAccount account  = CapitalMapper.toEntity(dto);
         return capitalAccountRepository.save(account);
@@ -64,13 +64,31 @@ public abstract class AbstractCapitalAccountStrategy implements CapitalAccountSt
     }
 
     @Override
-    public boolean disableValidity(CapitalCheckDTO dto) {
+    public boolean disableValidity(CheckDTO dto) {
         Optional<CapitalAccount> existingAccount = capitalAccountRepository.findById(dto.getCapitalAccountId());
         if (existingAccount.isEmpty()) {
             throw new ResourceNotFoundException("Capital", "[id: " + dto.getCapitalAccountId().toString() + "]");
         }
         CapitalAccount existing = existingAccount.get();
         return existing.getFrozenBalance().compareTo(BigDecimal.ZERO) == 0;
+    }
+
+    @Override
+    public CapitalAccount disableAccount(CapitalAccountDTO dto) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'disableAccount'");
+    }
+
+    @Override
+    public CapitalAccount restoreAccount(CapitalAccountDTO dto) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'restoreAccount'");
+    }
+
+    @Override
+    public CapitalAccount reportAccountLoss(CapitalAccountDTO dto) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'reportAccountLoss'");
     }
 
     

@@ -1,11 +1,23 @@
 package com.haydenshui.stock.lib.exception;
 
-public class ResourceAlreadyExistsException extends RuntimeException {
+import com.haydenshui.stock.constants.ErrorCode;
+import com.haydenshui.stock.utils.MessageSourceUtils;
+
+public class ResourceAlreadyExistsException extends BusinessException {
+
     private String resourceType;
+    
     private String resourceIdentifier;
 
     public ResourceAlreadyExistsException(String resourceType, String resourceIdentifier) {
-        super(String.format("Resource of type '%s' with identifier '%s' already exists.", resourceType, resourceIdentifier));
+        super(
+            MessageSourceUtils.getMessage(
+                "error.resource.already.exists",
+                resourceType,
+                resourceIdentifier
+            ),
+            ErrorCode.RESOURCE_ALREADY_EXISTS.toString()
+        );
         this.resourceType = resourceType;
         this.resourceIdentifier = resourceIdentifier;
     }

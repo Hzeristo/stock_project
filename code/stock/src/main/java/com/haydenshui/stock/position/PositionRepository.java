@@ -1,7 +1,6 @@
 package com.haydenshui.stock.position;
 
 import com.haydenshui.stock.lib.entity.position.Position;
-import com.haydenshui.stock.lib.entity.stock.Stock;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

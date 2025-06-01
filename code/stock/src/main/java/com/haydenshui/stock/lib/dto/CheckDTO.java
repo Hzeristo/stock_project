@@ -1,4 +1,4 @@
-package com.haydenshui.stock.lib.dto.capital;
+package com.haydenshui.stock.lib.dto;
 
 import lombok.*;
 
@@ -6,16 +6,16 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CapitalCheckDTO {
+public class CheckDTO {
+    
+    private Long securitiesAccountId; //check trade order only
 
     private Long capitalAccountId;
-
-    private Long securitiesAccountId;
-
+    
     private String type;
 
     private boolean passed;
 
     private String reason;
-    
+
 }

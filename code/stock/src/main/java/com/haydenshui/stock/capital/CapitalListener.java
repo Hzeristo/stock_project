@@ -12,10 +12,11 @@ import org.springframework.stereotype.Component;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.TypeReference;
 import com.haydenshui.stock.constants.RocketMQConstants;
+import com.haydenshui.stock.lib.dto.CheckDTO;
 import com.haydenshui.stock.lib.dto.capital.CapitalAccountTransactionDTO;
-import com.haydenshui.stock.lib.dto.capital.CapitalCheckDTO;
 import com.haydenshui.stock.lib.entity.account.CapitalAccountType;
 import com.haydenshui.stock.lib.msg.TransactionMessage;
+
 @Component
 @RocketMQMessageListener(topic = RocketMQConstants.TOPIC_CAPITAL, consumerGroup = "capital-update-group")
 public class CapitalListener implements RocketMQListener<MessageExt> {
@@ -24,11 +25,11 @@ public class CapitalListener implements RocketMQListener<MessageExt> {
 
     public CapitalListener(CapitalAccountService capitalService) {
         tagHandlerMap.put(RocketMQConstants.TAG_CAPITAL_VALIDITY_CHECK, raw -> {
-            TransactionMessage<CapitalCheckDTO> tmsg = JSON.parseObject(
+            TransactionMessage<CheckDTO> tmsg = JSON.parseObject(
                 raw,
-                new TypeReference<TransactionMessage<CapitalCheckDTO>>() {}
+                new TypeReference<TransactionMessage<CheckDTO>>() {}
             );
-            capitalService.disableValidity(tmsg.getPayload(), CapitalAccountType.FUND); 
+            capitalService.disableValidity(tmsg.getPayload(), "fund"); 
         });
         tagHandlerMap.put(RocketMQConstants.TAG_CAPITAL_VALIDITY_CONFIRM, raw -> {
         });

@@ -1,13 +1,10 @@
 package com.haydenshui.stock.securities;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.haydenshui.stock.lib.annotation.LogDetails;
 import com.haydenshui.stock.lib.dto.risk.RiskAssessmentDTO;
-import com.haydenshui.stock.lib.dto.securities.CorporateSecuritiesAccountDTO;
-import com.haydenshui.stock.lib.dto.securities.IndividualSecuritiesAccountDTO;
 import com.haydenshui.stock.lib.dto.securities.SecuritiesAccountDTO;
 import com.haydenshui.stock.utils.SecurityUtils;
 
@@ -22,7 +19,12 @@ public class SecuritiesAccountController {
         this.securitiesAccountService = securitiesAccountService;
     }
 
-    @PreAuthorize("#userId == authentication.principal")
+    @LogDetails 
+    @PutMapping("/new")
+    public ResponseEntity<?> createAccount(@RequestBody SecuritiesAccountDTO dto) {
+        return ResponseEntity.ok(securitiesAccountService.createAccount(dto));
+    } 
+
     @LogDetails
     @GetMapping("/profile")
     public ResponseEntity<?> getUserProfile(@RequestParam String type) {
@@ -30,21 +32,18 @@ public class SecuritiesAccountController {
         return ResponseEntity.ok(securitiesAccountService.getAccountById(userId, type));
     }
 
-    @PreAuthorize("#userId == authentication.principal")
     @LogDetails
     @PutMapping("/profile")
     public ResponseEntity<?> updateUserProfile(@RequestBody SecuritiesAccountDTO updateDTO) {
         return ResponseEntity.ok(securitiesAccountService.updateAccount(updateDTO));
     }
 
-    @PreAuthorize("#userId == authentication.principal")
     @LogDetails
     @PutMapping("/security")
     public ResponseEntity<?> updateSecuritySettings(@RequestBody SecuritiesAccountDTO securityDTO) {
         return ResponseEntity.ok(securitiesAccountService.updateAccount(securityDTO));
     }
 
-    @PreAuthorize("#userId == authentication.principal")
     @LogDetails
     @GetMapping("/risk-accessment")
     public ResponseEntity<?> getRiskAssessment(HttpServletRequest request) {
@@ -52,7 +51,6 @@ public class SecuritiesAccountController {
         return ResponseEntity.ok().build();
     }
 
-    @PreAuthorize("#userId == authentication.principal")
     @LogDetails
     @PostMapping("/risk-accessment")
     public ResponseEntity<?> submitRiskAssessment(@RequestBody RiskAssessmentDTO riskDTO,

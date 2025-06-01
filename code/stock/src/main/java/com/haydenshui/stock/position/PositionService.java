@@ -58,7 +58,7 @@ public class PositionService {
     
         int freezeAmount = positionDTO.getQuantity();
         if (freezeAmount < 0 && position.getQuantity() + freezeAmount < 0) {
-            throw new ResourceInsufficientException("position", "[id: " + positionDTO.getId() + "]", "Sell");
+            throw new ResourceInsufficientException("position", positionDTO.getId().toString(), "Sell");
         }
     
         position.setFrozenQuantity(

@@ -12,7 +12,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 public class JpaConfig {
 
     @Bean
-    public AuditorAware<String> auditorProvider() {
+    AuditorAware<String> auditorProvider() {
         return () -> Optional.of("system"); 
     }
 }

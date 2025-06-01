@@ -1,8 +1,8 @@
 package com.haydenshui.stock.capital.strategy;
 
+import com.haydenshui.stock.lib.dto.CheckDTO;
 import com.haydenshui.stock.lib.dto.capital.CapitalAccountDTO;
 import com.haydenshui.stock.lib.dto.capital.CapitalAccountTransactionDTO;
-import com.haydenshui.stock.lib.dto.capital.CapitalCheckDTO;
 import com.haydenshui.stock.lib.entity.account.CapitalAccount;
 import com.haydenshui.stock.lib.entity.account.CapitalAccountType;
 import com.haydenshui.stock.lib.entity.tcc.TccContext;
@@ -25,7 +25,8 @@ public interface CapitalAccountStrategy {
 
     // ======= account security =======
 
-    boolean disableValidity(CapitalCheckDTO dto);
+    boolean disableValidity(CheckDTO dto);
+
 
     CapitalAccount restoreAccount(CapitalAccountDTO dto);
 

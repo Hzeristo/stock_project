@@ -60,8 +60,8 @@ public class FundAccountStrategy extends AbstractCapitalAccountStrategy {
     @Override
     public void freezeAmount(TccContext context, CapitalAccountTransactionDTO dto) {
         throw new InvalidStrategyInvocationException(
-            this.getClass().getSimpleName(),
             new Object(){}.getClass().getEnclosingMethod().getName(),
+            this.getClass().getSimpleName(),
             messageSource
         );
     }

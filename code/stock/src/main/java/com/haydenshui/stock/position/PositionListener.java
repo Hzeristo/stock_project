@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.TypeReference;
+import com.haydenshui.stock.constants.ErrorCode;
 import com.haydenshui.stock.constants.RocketMQConstants;
 import com.haydenshui.stock.lib.dto.position.PositionTransactionalDTO;
 import com.haydenshui.stock.lib.exception.ResourceInsufficientException;
@@ -22,12 +23,9 @@ import com.haydenshui.stock.utils.RocketMQUtils;
 @RocketMQMessageListener(topic = RocketMQConstants.TOPIC_POSITION, consumerGroup = RocketMQConstants.CONSUMER_POSITION)
 public class PositionListener implements RocketMQListener<MessageExt> {
 
-    private final PositionService positionService;
-
     private final Map<String, Consumer<TransactionMessage<PositionTransactionalDTO>>> tagHandlerMap;
 
     public PositionListener(PositionService positionService) {
-        this.positionService = positionService;
         this.tagHandlerMap = new HashMap<>();
         tagHandlerMap.put(RocketMQConstants.TAG_TRADE_CREATE, tmsg ->
             positionService.tradeUpdatePosition(tmsg.getContext(), tmsg.getPayload())
@@ -64,8 +62,8 @@ public class PositionListener implements RocketMQListener<MessageExt> {
         try {
             handler.accept(tmsg);
         } catch (Exception e) {
-            String errorCode = e instanceof ResourceInsufficientException ? "RESOURCE_INSUFFICIENT"
-                               : e instanceof ResourceNotFoundException ? "RESOURCE_NOT_FOUND"
+            String errorCode = e instanceof ResourceInsufficientException ? ErrorCode.RESOURCE_INSUFFICIENT.getCode()
+                               : e instanceof ResourceNotFoundException ? ErrorCode.RESOURCE_NOT_FOUND.getCode()
                                : "UNKNOWN_ERROR";
     
             tmsg.setErrorCode(errorCode);

@@ -1,12 +1,14 @@
 package com.haydenshui.stock.securities.strategy;
 
-import com.haydenshui.stock.lib.dto.capital.CapitalCheckDTO;
+import com.haydenshui.stock.lib.dto.CheckDTO;
 import com.haydenshui.stock.lib.dto.securities.SecuritiesAccountDTO;
 import com.haydenshui.stock.lib.entity.account.SecuritiesAccount;
 
 public interface SecuritiesAccountStrategy<T extends SecuritiesAccount, D extends SecuritiesAccountDTO> {
     
     boolean matches(String type);
+
+    boolean validate(D dto);
 
     T createAccount(D dto);
 
@@ -24,9 +26,11 @@ public interface SecuritiesAccountStrategy<T extends SecuritiesAccount, D extend
 
     void tryDisableAccount(T account);
 
-    T confirmDisableAccount(CapitalCheckDTO dto);
+    T confirmDisableAccount(CheckDTO dto);
 
-    T reportAccountLoss(D dto);
+    void tryReportAccountLoss(D dto);
+
+    T comfirmAccountLoss(CheckDTO dto);
 
     T restoreAccount(D dto);
 

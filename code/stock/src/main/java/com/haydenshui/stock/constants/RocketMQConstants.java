@@ -21,6 +21,7 @@ public class RocketMQConstants {
     public static final String TAG_TRADE_CREATE = "${rocketmq-config.tags.trade-create}";
     public static final String TAG_TRADE_CONFIRM = "${rocketmq-config.tags.trade-confirm}";
     public static final String TAG_TRADE_CANCEL = "${rocketmq-config.tags.trade-cancel}";
+    public static final String TAG_TRADE_VALIDITY_CHECK = "${rocketmq-config.tags.trade-validity-check}";
     public static final String TAG_CAPITAL_CHECK = "${rocketmq-config.tags.capital-check}";
     public static final String TAG_CAPITAL_VALIDITY_CHECK = "${rocketmq-config.tags.capital_validity-check}";
     public static final String TAG_CAPITAL_VALIDITY_CONFIRM = "${rocketmq-config.tags.capital_validity-confirm}";

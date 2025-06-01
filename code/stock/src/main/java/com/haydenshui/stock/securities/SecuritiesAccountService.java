@@ -2,7 +2,7 @@ package com.haydenshui.stock.securities;
 
 import org.springframework.stereotype.Service;
 
-import com.haydenshui.stock.lib.dto.capital.CapitalCheckDTO;
+import com.haydenshui.stock.lib.dto.CheckDTO;
 import com.haydenshui.stock.lib.dto.securities.SecuritiesAccountDTO;
 import com.haydenshui.stock.lib.entity.account.*;
 import com.haydenshui.stock.securities.strategy.SecuritiesAccountStrategyFactory;
@@ -14,6 +14,10 @@ public class SecuritiesAccountService {
 
     public SecuritiesAccountService(SecuritiesAccountStrategyFactory strategyFactory) {
         this.strategyFactory = strategyFactory;
+    }
+
+    public boolean validate(SecuritiesAccountDTO dto) {
+        return strategyFactory.getStrategy(dto.getType()).validate(dto);
     }
 
     public SecuritiesAccount createAccount(SecuritiesAccountDTO dto) {
@@ -48,12 +52,16 @@ public class SecuritiesAccountService {
         strategyFactory.getStrategy(account.getType()).tryDisableAccount(account);
     }
 
-    public SecuritiesAccount confirmDisableAccount(CapitalCheckDTO dto) {
+    public SecuritiesAccount confirmDisableAccount(CheckDTO dto) {
         return strategyFactory.getStrategy(dto.getType()).confirmDisableAccount(dto);
     }
 
-    public SecuritiesAccount reportAccountLoss(SecuritiesAccountDTO dto) {
-        return strategyFactory.getStrategy(dto.getType()).reportAccountLoss(dto);
+    public void tryReportAccountLoss(SecuritiesAccountDTO dto) {
+        strategyFactory.getStrategy(dto.getType()).tryReportAccountLoss(dto);
+    }
+
+    public SecuritiesAccount comfirmAccountLoss(CheckDTO dto) {
+        return strategyFactory.getStrategy(dto.getType()).comfirmAccountLoss(dto);
     }
 
     public SecuritiesAccount restoreAccount(SecuritiesAccountDTO dto) {

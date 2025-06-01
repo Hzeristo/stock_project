@@ -3,10 +3,7 @@ package com.haydenshui.stock.securities.strategy;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,11 +11,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.alibaba.fastjson2.JSON;
 import com.haydenshui.stock.constants.RocketMQConstants;
 import com.haydenshui.stock.lib.annotation.LocalTcc;
+import com.haydenshui.stock.lib.annotation.Lock;
 import com.haydenshui.stock.lib.annotation.ServiceLog;
-import com.haydenshui.stock.lib.dto.capital.CapitalCheckDTO;
+import com.haydenshui.stock.lib.dto.CheckDTO;
 import com.haydenshui.stock.lib.dto.securities.CorporateSecuritiesAccountDTO;
 import com.haydenshui.stock.lib.dto.securities.SecuritiesMapper;
 import com.haydenshui.stock.lib.entity.account.AccountStatus;
+import com.haydenshui.stock.lib.entity.account.CapitalAccountType;
 import com.haydenshui.stock.lib.entity.account.CorporateSecuritiesAccount;
 import com.haydenshui.stock.lib.exception.ResourceAlreadyExistsException;
 import com.haydenshui.stock.lib.exception.ResourceNotFoundException;
@@ -44,17 +43,78 @@ public class CorporateSecuritiesAccountStrategy implements SecuritiesAccountStra
         return type.equals("corporate");
     }
 
+    private void initPendingCheckAndSendMessage(Long securitiesAccountId, List<Long> capitalAccountIds) {
+        String redisKey = "tcc:close:" + securitiesAccountId;
+    
+        // 1. Capital account checks
+        for (var id : capitalAccountIds) {
+            setPendingAndSendCheck(redisKey, id.toString(),
+                new CheckDTO(id, securitiesAccountId, "corporate", false, ""),
+                RocketMQConstants.TOPIC_CAPITAL,
+                RocketMQConstants.TAG_CAPITAL_VALIDITY_CHECK,
+                "capital-check"
+            );
+        }
+    
+        // 2. Trade check
+        setPendingAndSendCheck(redisKey, "trade",
+            new CheckDTO(securitiesAccountId, null, "corporate", false, ""),
+            RocketMQConstants.TOPIC_TRADE,
+            RocketMQConstants.TAG_TRADE_VALIDITY_CHECK,
+            "trade-check"
+        );
+    
+        // 3. Position check
+        setPendingAndSendCheck(redisKey, "position",
+            new CheckDTO(securitiesAccountId, null, "corporate", false, ""),
+            RocketMQConstants.TOPIC_TRADE,
+            RocketMQConstants.TAG_TRADE_VALIDITY_CHECK,
+            "trade-check"
+        );
+    
+        // 4. Set key expiration
+        RedisUtils.expire(redisKey, 5, TimeUnit.MINUTES);
+    }
+    
+    private void setPendingAndSendCheck(String redisKey, String field, CheckDTO dto, String topic, String tag, String businessAction) {
+        RedisUtils.hSet(redisKey, field, "PENDING");
+        RocketMQUtils.sendMessageWithTag(
+            "securities",
+            topic,
+            tag,
+            JSON.toJSONString(TransactionMessage.<CheckDTO>builder()
+                .businessAction(businessAction)
+                .payload(dto)
+            )
+        );
+    }
+    
+
+    @Deprecated
+    @Override
+    @ServiceLog
+    public boolean validate(CorporateSecuritiesAccountDTO dto) {
+        Optional<CorporateSecuritiesAccount> existingAccount = repository.findByAccountNumber(dto.getAccountNumber());
+        existingAccount.ifPresent(acc -> {
+            throw new ResourceAlreadyExistsException("Securities", "[AccountNumber: " + acc.getAccountNumber() + "]");
+        });
+        CorporateSecuritiesAccount existing = existingAccount.get();
+        CorporateSecuritiesAccount account = SecuritiesMapper.toEntity(dto);
+        return existing.getPassword().equals(passwordEncoder.encode(account.getPassword()));
+    }
+
     @Override
     @Transactional
     @ServiceLog
     public CorporateSecuritiesAccount createAccount(CorporateSecuritiesAccountDTO dto) {
         Optional<CorporateSecuritiesAccount> existingAccount = repository.findByAccountNumber(dto.getAccountNumber());
         existingAccount.ifPresent(acc -> {
-            throw new ResourceAlreadyExistsException("Securities", acc.getAccountNumber());
+            throw new ResourceAlreadyExistsException("Securities", "[AccountNumber: " + acc.getAccountNumber() + "]");
         });
         CorporateSecuritiesAccount account = SecuritiesMapper.toEntity(dto);
+        account.setStatus(AccountStatus.fromString(dto.getStatus()));
+        account.setPassword(passwordEncoder.encode(account.getPassword()));
         return repository.save(account);
-        //TODO: add logic to check createdAt and status
     }
 
     @Override
@@ -86,6 +146,7 @@ public class CorporateSecuritiesAccountStrategy implements SecuritiesAccountStra
         CorporateSecuritiesAccount existing = existingAccount.get();
         CorporateSecuritiesAccount patch = SecuritiesMapper.toEntity(dto);
         BeanCopyUtils.copyNonNullProperties(patch, existing);
+        existing.setStatus(AccountStatus.fromString(dto.getStatus()));
         existing.setPassword(passwordEncoder.encode(existing.getPassword()));
         return repository.save(existing);   
     }
@@ -103,7 +164,9 @@ public class CorporateSecuritiesAccountStrategy implements SecuritiesAccountStra
         existing.setPassword(passwordEncoder.encode(existing.getPassword()));
         return repository.save(existing);    
     }
-
+    
+    // DONE
+    @Lock(lockKey = "LOCK:NORMAL:SECURITIES:{dto.securitiesAccountId}")
     @Override
     @LocalTcc
     @ServiceLog
@@ -115,16 +178,11 @@ public class CorporateSecuritiesAccountStrategy implements SecuritiesAccountStra
         CorporateSecuritiesAccount existing = existingAccount.get();
 
         List<Long> capitalAccountIds = existing.getCapitalAccountIds();
-        for (var id : capitalAccountIds){
-            RocketMQUtils.sendMessageWithTag(
-                "securities",
-                RocketMQConstants.TOPIC_CAPITAL,
-                RocketMQConstants.TAG_CAPITAL_VALIDITY_CHECK,
-                id.toString()
-            );
-        }
+        initPendingCheckAndSendMessage(dto.getId(), capitalAccountIds);
     }
 
+    // DONE
+    @Lock(lockKey = "LOCK:NORMAL:SECURITIES:{account.id}")
     @Override
     @LocalTcc
     @ServiceLog
@@ -136,25 +194,16 @@ public class CorporateSecuritiesAccountStrategy implements SecuritiesAccountStra
         CorporateSecuritiesAccount existing = existingAccount.get();
 
         List<Long> capitalAccountIds = existing.getCapitalAccountIds();
-        for (var id : capitalAccountIds){
-            RedisUtils.hSet("tcc:close:" + account.getId(), id.toString(), "PENDING");
-            CapitalCheckDTO dto = new CapitalCheckDTO(id, account.getId(), "corporate", false, "");
-            RocketMQUtils.sendMessageWithTag(
-                "securities",
-                RocketMQConstants.TOPIC_CAPITAL,
-                RocketMQConstants.TAG_CAPITAL_VALIDITY_CHECK,
-                JSON.toJSONString(TransactionMessage.<CapitalCheckDTO>builder()
-                    .businessAction("capital-check")
-                    .payload(dto)
-                )
-            );
-        }
-        RedisUtils.expire("tcc:close:" + account.getId(), 5, TimeUnit.MINUTES);
+        //check capital
+        initPendingCheckAndSendMessage(account.getId(), capitalAccountIds);
     }
 
+    // DONE
+    @Lock(lockKey = "LOCK:NORMAL:SECURITIES:{dto.securitiesAccountId}")
+    @Override
     @LocalTcc
     @ServiceLog
-    public CorporateSecuritiesAccount confirmDisableAccount(CapitalCheckDTO dto) {
+    public CorporateSecuritiesAccount confirmDisableAccount(CheckDTO dto) {
         String redisKey = "tcc:close:" + dto.getSecuritiesAccountId();
         String capitalAccountId = dto.getCapitalAccountId().toString();
 
@@ -183,43 +232,62 @@ public class CorporateSecuritiesAccountStrategy implements SecuritiesAccountStra
         return repository.save(account);
     }
 
-
-
+    @Lock(lockKey = "LOCK:NORMAL:SECURITIES:{dto.securitiesAccountId}")
     @Override
-    @Transactional
+    @LocalTcc
     @ServiceLog
-    public CorporateSecuritiesAccount reportAccountLoss(CorporateSecuritiesAccountDTO dto) {
-    Optional<CorporateSecuritiesAccount> optionalAccount = repository.findById(dto.getId());
+    public void tryReportAccountLoss(CorporateSecuritiesAccountDTO dto) {
+        Optional<CorporateSecuritiesAccount> optionalAccount = repository.findById(dto.getId());
         if (optionalAccount.isEmpty()) {
             throw new ResourceNotFoundException("securities", "[id: " + dto.getId() + "]");
         }
-        CorporateSecuritiesAccount account = optionalAccount.get();
-        if (account.getStatus() == AccountStatus.SUSPENDED) {
+        CorporateSecuritiesAccount existing = optionalAccount.get();
+        if (existing.getStatus() == AccountStatus.SUSPENDED) {
             throw new IllegalStateException("The account is already reported as lost.");
         }
-        try {
-            if (checkTradeOrders(account.getId()).get(10, TimeUnit.SECONDS)) {
-                throw new IllegalStateException("The account has trade orders.");
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("Thread was interrupted while checking trade orders.");
-        } catch (TimeoutException e) {
-            throw new IllegalStateException("Failed to check trade orders: Timeout. " + e.getCause().getMessage(), e);
-        } catch (ExecutionException e) {
-            throw new IllegalStateException("Failed to check trade orders: " + e.getCause().getMessage(), e);
-        }
-    
-        account.setStatus(AccountStatus.SUSPENDED);
-        return repository.save(account);
+        //TODO: check what
     }
 
-    private CompletableFuture<Boolean> checkTradeOrders(Long securitiesAccountId) {
-        return CompletableFuture.supplyAsync(() -> {
-            //TODO: add logic to check trade orders
-            return true; 
-        });
+    @Lock(lockKey = "LOCK:NORMAL:SECURITIES:{dto.securitiesAccountId}")
+    @Override
+    @LocalTcc
+    @ServiceLog
+    public CorporateSecuritiesAccount comfirmAccountLoss(CheckDTO dto) {
+        //TODO: check what
+        throw new UnsupportedOperationException("Unimplemented method");
+        // String redisKey = "tcc:close:" + dto.getSecuritiesAccountId();
+        // String capitalAccountId = dto.getCapitalAccountId().toString();
+
+        // String status = dto.isPassed() ? "SUCCESS" : "FAILURE";
+        // String oldStatus = RedisUtils.hGet(redisKey, capitalAccountId);
+        // if ("PENDING".equals(oldStatus)) {
+        //     RedisUtils.hSet(redisKey, capitalAccountId, status);
+        // }
+
+        // Map<Object, Object> checkStatusMap = RedisUtils.hGetAll(redisKey);
+
+        // boolean allChecked = checkStatusMap.values().stream()
+        //     .noneMatch(val -> "PENDING".equals(val));
+
+        // if (!allChecked) {
+        //     return null;
+        // }
+
+        // RedisUtils.delete(redisKey);
+
+        // boolean allSuccess = checkStatusMap.values().stream()
+        //     .allMatch(val -> "SUCCESS".equals(val));
+
+        // if (!allSuccess) {
+        //     throw new IllegalStateException("Some capital accounts can not disable.");
+        // }
+
+        // CorporateSecuritiesAccount account = repository.findById(dto.getSecuritiesAccountId())
+        //     .orElseThrow(() -> new ResourceNotFoundException("securities", "[id: " + dto.getSecuritiesAccountId() + "]"));
+        // account.setStatus(AccountStatus.SUSPENDED);
+        // return repository.save(account);
     }
+
 
     @Override
     @Transactional
@@ -234,20 +302,6 @@ public class CorporateSecuritiesAccountStrategy implements SecuritiesAccountStra
         if (account.getStatus() != AccountStatus.SUSPENDED) {
             throw new IllegalStateException("Only suspended accounts can be restored.");
         }
-
-        // try {
-        //     if (checkTradeOrders(account.getId()).get(10, TimeUnit.SECONDS)) {
-        //         throw new IllegalStateException("The account has trade orders and cannot be restored.");
-        //     }
-        // } catch (InterruptedException e) {
-        //     Thread.currentThread().interrupt();
-        //     throw new IllegalStateException("Thread was interrupted while checking trade orders.");
-        // } catch (TimeoutException e) {
-        //     throw new IllegalStateException("Failed to check trade orders: Timeout. " + e.getCause().getMessage(), e);
-        // } catch (ExecutionException e) {
-        //     throw new IllegalStateException("Failed to check trade orders: " + e.getCause().getMessage(), e);
-        // }
-
         account.setStatus(AccountStatus.ACTIVE);
         return repository.save(account);    
     }

@@ -2,7 +2,6 @@ package com.haydenshui.stock.capital.strategy;
 
 import java.math.BigDecimal;
 
-import org.springframework.boot.autoconfigure.cache.CacheProperties.Redis;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,7 +80,7 @@ public class TradeAccountStrategy extends AbstractCapitalAccountStrategy {
 
         BigDecimal freezeAmount = capitalDTO.getAmount();
         if (capitalAccount.getAvailableBalance().compareTo(freezeAmount) < 0) {
-            throw new ResourceInsufficientException("capitalAccount", "[id: " + capitalDTO.getId() + "]", "Freeze");
+            throw new ResourceInsufficientException("capitalAccount", capitalDTO.getId().toString(), "Freeze");
         }
 
         capitalAccount.setAvailableBalance(
