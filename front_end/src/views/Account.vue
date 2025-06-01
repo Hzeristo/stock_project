@@ -38,14 +38,23 @@
             </template>
           </el-table-column>
         </el-table>
-      </el-tab-pane>
-
-      <!-- 交易记录 -->
+      </el-tab-pane>      <!-- 交易记录 -->
       <el-tab-pane label="交易记录" name="transactions">
+        <div class="transactions-header">
+          <div class="transactions-title">
+            <span>交易记录</span>
+            <span class="record-count">（共 {{ transactions.length }} 条记录）</span>
+          </div>
+          <el-button type="primary" size="small" @click="refreshTransactions">
+            <el-icon><Refresh /></el-icon>
+            刷新记录
+          </el-button>
+        </div>
         <el-table :data="transactions" style="width: 100%">
-          <el-table-column prop="date" label="交易日期" align="center" width="230" />
+          <el-table-column prop="date" label="交易日期" align="center" width="150" />
           <el-table-column prop="stockName" label="股票名称" align="center" />
-          <el-table-column prop="type" label="交易类型" align="center">
+          <el-table-column prop="stockCode" label="股票代码" align="center" width="120" />
+          <el-table-column prop="type" label="交易类型" align="center" width="100">
             <template #default="scope">
               <span :class="scope.row.type === '买入' ? 'profit' : 'loss'">
                 {{ scope.row.type }}
@@ -106,11 +115,16 @@
 </template>
 
 <script>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Refresh } from '@element-plus/icons-vue'
+import { getTradeRecords, initializeDefaultRecords } from '@/utils/tradeManager'
 
 export default {
   name: 'AccountView',
+  components: {
+    Refresh
+  },
   setup() {
     const activeTab = ref('positions')
 
@@ -154,43 +168,21 @@ export default {
         currentPrice: 12.46,
         profitLoss: -2.66
       }
-    ])
+    ])    // 交易记录
+    const transactions = ref([])
+      // 组件挂载时加载交易记录
+    onMounted(() => {
+      // 初始化默认记录（如果没有记录的话）
+      initializeDefaultRecords()
+      // 从本地存储加载交易记录
+      transactions.value = getTradeRecords()
+    })
 
-    // 交易记录
-    const transactions = ref([
-      {
-        date: '2024-03-15',
-        stockName: '阿里巴巴',
-        type: '买入',
-        price: 88.50,
-        quantity: 100,
-        amount: 8850.00
-      },
-      {
-        date: '2024-03-14',
-        stockName: '腾讯控股',
-        type: '卖出',
-        price: 370.00,
-        quantity: 20,
-        amount: 7400.00
-      },
-      {
-        date: '2024-03-11',
-        stockName: '小米集团',
-        type: '买入',
-        price: 12.80,
-        quantity: 500,
-        amount: 6400.00
-      },
-      {
-        date: '2024-03-10',
-        stockName: '腾讯控股',
-        type: '买入',
-        price: 365.00,
-        quantity: 50,
-        amount: 18250.00
-      }
-    ])
+    // 刷新交易记录
+    const refreshTransactions = () => {
+      transactions.value = getTradeRecords()
+      ElMessage.success('交易记录已刷新')
+    }
 
     // 充值表单
     const depositForm = reactive({
@@ -235,8 +227,7 @@ export default {
       }
       if (amount > accountInfo.availableFunds) {
         ElMessage.error('可用资金不足')
-        return
-      }
+        return      }
       ElMessage.success('提现申请已提交')
       accountInfo.availableFunds -= amount
       withdrawForm.amount = ''
@@ -248,6 +239,7 @@ export default {
       accountInfo,
       positions,
       transactions,
+      refreshTransactions,
       depositForm,
       withdrawForm,
       handleDeposit,
@@ -290,6 +282,26 @@ export default {
 
 .account-tabs {
   margin-top: 20px;
+}
+
+.transactions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 0 4px;
+}
+
+.transactions-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.record-count {
+  font-size: 14px;
+  color: #909399;
+  font-weight: normal;
+  margin-left: 8px;
 }
 
 .fund-operations {

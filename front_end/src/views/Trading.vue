@@ -76,8 +76,9 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { addTradeRecord, addPendingTrade, getPendingTrades } from '@/utils/tradeManager'
 
 export default {
   name: 'TradingView',
@@ -98,6 +99,11 @@ export default {
     ])
 
     const pendingTrades = ref([]) // 待匹配交易记录
+
+    // 组件挂载时加载待匹配交易记录
+    onMounted(() => {
+      pendingTrades.value = getPendingTrades()
+    })
 
     const totalPrice = computed(() => {
       const p = Number(tradeForm.value.price)
@@ -124,8 +130,8 @@ export default {
         return
       }
       
-      // 更新待匹配交易记录
-      const pendingTransaction = {
+      // 创建交易记录对象
+      const tradeData = {
         stockCode,
         type: tradeForm.value.type,
         price: price.toFixed(2),
@@ -133,9 +139,22 @@ export default {
         totalPrice: totalPrice.value,
         time: new Date().toLocaleString()
       }
-      pendingTrades.value.unshift(pendingTransaction)
-
-      ElMessage.success('成功提交订单')
+      
+      // 添加到待匹配交易记录（本地显示）
+      const pendingTrade = addPendingTrade(tradeData)
+      if (pendingTrade) {
+        pendingTrades.value.unshift(pendingTrade)
+      }
+      
+      // 同时添加到交易记录（模拟立即执行）
+      const completedTrade = addTradeRecord(tradeData)
+      
+      if (completedTrade) {
+        ElMessage.success('成功提交订单，交易已记录到账户中')
+      } else {
+        ElMessage.error('订单提交失败')
+        return
+      }
 
       // 清空表单数据
       resetForm()
@@ -176,7 +195,7 @@ export default {
 
 .pending-trade-card {
   margin-bottom: 40px;
-  max-width: 1200px; /* 增加待匹配交易表格的宽度 */
+  max-width: 1200px;
   margin: 0 auto;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
@@ -188,8 +207,6 @@ export default {
 
 .trading-form {
   padding: 20px;
-
-  /* 表单整体纵向布局 + 居中 */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -206,12 +223,9 @@ export default {
   font-size: 14px;
 }
 
-
 .el-form-item {
   width: 100%;
-  max-width: 400px; /* 控制每项的宽度 */
+  max-width: 400px;
   justify-content: center;
 }
 </style>
-
-
