@@ -53,35 +53,48 @@
             <el-empty description="股价走势图 (可集成ECharts实现)"></el-empty>
           </div>
         </div>
-      </div>
-
-      <div class="action-section">
-        <el-button type="primary" class="action-button trade-button">
+      </div>      <div class="action-section">
+        <el-button type="primary" class="action-button trade-button" @click="goToTrading">
           <el-icon><Sell /></el-icon>前往交易
         </el-button>
-        <el-button class="action-button">
+        <el-button class="action-button" @click="showAlertDialog">
           <el-icon><Bell /></el-icon>设置提醒
         </el-button>
-        <el-button class="action-button">
-          <el-icon><Star /></el-icon>加入自选
-        </el-button>
-      </div>
+        <el-button 
+          class="action-button" 
+          :class="{ 'in-watchlist': isInWatchlist }"
+          @click="toggleWatchlist"
+        >
+          <el-icon><Star /></el-icon>{{ isInWatchlist ? '移出自选' : '加入自选' }}
+        </el-button>      </div>
     </div>
+
+    <!-- 股票提醒弹窗 -->
+    <stock-alert-dialog 
+      v-model:visible="alertDialogVisible" 
+      :stock="stock"
+      @alert-added="handleAlertAdded"
+    />
       </el-dialog>
   </teleport>
 </template>
 
 <script>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { Sell, Bell, Star } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
+import StockAlertDialog from './StockAlertDialog.vue';
+import { addToWatchlist, removeFromWatchlist, isInWatchlist as checkInWatchlist } from '@/utils/stockManager';
 
 export default {
   name: 'StockDetailDialog',
   components: {
     Sell,
     Bell,
-    Star
-  },  props: {
+    Star,
+    StockAlertDialog
+  },props: {
     visible: {
       type: Boolean,
       required: true,
@@ -92,9 +105,11 @@ export default {
       required: true,
       default: () => ({})
     }
-  },
-  setup() {
+  },  setup(props, { emit }) {
+    const router = useRouter();
     const timeRange = ref('day');
+    const alertDialogVisible = ref(false);
+    const isInWatchlist = ref(false);
 
     // 响应式弹窗宽度
     const dialogWidth = computed(() => {
@@ -113,13 +128,95 @@ export default {
       const month = String(today.getMonth() + 1).padStart(2, '0');
       const day = String(today.getDate()).padStart(2, '0');
       return `${year}-${month}-${day}`;
-    };    return {
+    };
+
+    // 监听股票变化，更新自选状态
+    watch(() => props.stock, (newStock) => {
+      if (newStock && newStock.code) {
+        isInWatchlist.value = checkInWatchlist(newStock.code);
+      }
+    }, { immediate: true });
+
+    // 前往交易页面
+    const goToTrading = () => {
+      if (!props.stock || !props.stock.code) {
+        ElMessage.warning('股票信息不完整');
+        return;
+      }
+
+      // 关闭弹窗
+      emit('update:visible', false);
+      
+      // 将股票信息存储到sessionStorage，供交易页面使用
+      sessionStorage.setItem('selectedStockForTrade', JSON.stringify({
+        code: props.stock.code,
+        name: props.stock.name,
+        currentPrice: props.stock.currentPrice
+      }));
+
+      // 跳转到交易页面
+      router.push('/trading');
+      ElMessage.success(`已跳转到交易页面，自动选择${props.stock.name}`);
+    };
+
+    // 显示提醒设置弹窗
+    const showAlertDialog = () => {
+      if (!props.stock || !props.stock.code) {
+        ElMessage.warning('股票信息不完整');
+        return;
+      }
+      alertDialogVisible.value = true;
+    };
+
+    // 切换自选股状态
+    const toggleWatchlist = () => {
+      if (!props.stock || !props.stock.code) {
+        ElMessage.warning('股票信息不完整');
+        return;
+      }
+
+      if (isInWatchlist.value) {
+        // 移出自选
+        const success = removeFromWatchlist(props.stock.code);
+        if (success) {
+          isInWatchlist.value = false;
+          ElMessage.success(`已移出自选股: ${props.stock.name}`);
+          emit('watchlist-changed', 'remove', props.stock);
+        } else {
+          ElMessage.error('移出自选股失败');
+        }
+      } else {
+        // 添加到自选
+        const success = addToWatchlist(props.stock);
+        if (success) {
+          isInWatchlist.value = true;
+          ElMessage.success(`已添加到自选股: ${props.stock.name}`);
+          emit('watchlist-changed', 'add', props.stock);
+        } else {
+          ElMessage.error('添加自选股失败');
+        }
+      }
+    };
+
+    // 处理提醒添加完成
+    const handleAlertAdded = (alertData) => {
+      ElMessage.success(`已为 ${props.stock.name} 设置价格提醒`);
+      emit('alert-added', alertData);
+    };
+
+    return {
       timeRange,
       dialogWidth,
-      getTodayDate
+      alertDialogVisible,
+      isInWatchlist,
+      getTodayDate,
+      goToTrading,
+      showAlertDialog,
+      toggleWatchlist,
+      handleAlertAdded
     };
   },
-  emits: ['update:visible', 'close'],
+  emits: ['update:visible', 'close', 'watchlist-changed', 'alert-added'],
   methods: {
     handleClose() {
       this.$emit('update:visible', false);
@@ -280,6 +377,17 @@ export default {
 .trade-button:hover {
   background-color: #0077ed;
   border-color: #0077ed;
+}
+
+.in-watchlist {
+  background-color: #f56c6c;
+  border-color: #f56c6c;
+  color: white;
+}
+
+.in-watchlist:hover {
+  background-color: #f78989;
+  border-color: #f78989;
 }
 
 @media (max-width: 768px) {

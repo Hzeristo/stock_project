@@ -6,14 +6,20 @@
         <div class="card-header">
           <span>待匹配交易</span>
         </div>
-      </template>
-      <el-table :data="pendingTrades" stripe style="width: 100%">
-        <el-table-column prop="stockCode" label="股票代码" width="180" />
-        <el-table-column prop="type" label="交易类型" width="120" />
-        <el-table-column prop="price" label="单价（¥）" />
-        <el-table-column prop="quantity" label="数量" />
-        <el-table-column prop="totalPrice" label="总价（¥）" />
-        <el-table-column prop="time" label="提交时间" />
+      </template>      <el-table :data="pendingTrades" stripe style="width: 100%">
+        <el-table-column prop="date" label="交易日期" align="center" width="150" />
+        <el-table-column prop="stockName" label="股票名称" align="center" />
+        <el-table-column prop="stockCode" label="股票代码" align="center" width="120" />
+        <el-table-column prop="type" label="交易类型" align="center" width="100">
+          <template #default="scope">
+            <span :class="scope.row.type === '买入' ? 'profit' : 'loss'">
+              {{ scope.row.type }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="price" label="交易价格" align="center" />
+        <el-table-column prop="quantity" label="交易数量" align="center" />
+        <el-table-column prop="amount" label="交易金额" align="center" />
       </el-table>
     </el-card>
 
@@ -78,7 +84,7 @@
 <script>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { addTradeRecord, addPendingTrade, getPendingTrades } from '@/utils/tradeManager'
+import { addTradeRecord, addPendingTrade, getPendingTrades, getStockName } from '@/utils/tradeManager'
 
 export default {
   name: 'TradingView',
@@ -98,11 +104,36 @@ export default {
       { name: '中国平安', code: '601318.SH' }
     ])
 
-    const pendingTrades = ref([]) // 待匹配交易记录
-
-    // 组件挂载时加载待匹配交易记录
+    const pendingTrades = ref([]) // 待匹配交易记录    // 组件挂载时加载待匹配交易记录
     onMounted(() => {
-      pendingTrades.value = getPendingTrades()
+      const rawPendingTrades = getPendingTrades()
+      // 将待匹配交易格式化为与Account.vue一致的格式
+      pendingTrades.value = rawPendingTrades.map(trade => ({
+        ...trade,
+        date: trade.time ? new Date(trade.time).toLocaleDateString('zh-CN') : 
+              (trade.date || new Date().toLocaleDateString('zh-CN')),
+        stockName: getStockName(trade.stockCode),
+        amount: trade.totalPrice || trade.amount || '0.00'
+      }))
+      
+      // 检查是否有预选的股票信息
+      const selectedStock = sessionStorage.getItem('selectedStockForTrade')
+      if (selectedStock) {
+        try {
+          const stockData = JSON.parse(selectedStock)
+          // 预填充股票信息
+          tradeForm.value.stockCode = stockData.code
+          if (stockData.currentPrice) {
+            tradeForm.value.price = parseFloat(stockData.currentPrice)
+          }
+          // 清除sessionStorage中的数据
+          sessionStorage.removeItem('selectedStockForTrade')
+          
+          ElMessage.success(`已自动选择股票: ${stockData.name}`)
+        } catch (error) {
+          console.error('解析预选股票信息失败:', error)
+        }
+      }
     })
 
     const totalPrice = computed(() => {
@@ -129,8 +160,7 @@ export default {
         ElMessage.error('资金账户密码错误')
         return
       }
-      
-      // 创建交易记录对象
+        // 创建交易记录对象
       const tradeData = {
         stockCode,
         type: tradeForm.value.type,
@@ -140,10 +170,19 @@ export default {
         time: new Date().toLocaleString()
       }
       
-      // 添加到待匹配交易记录（本地显示）
+      // 添加到待匹配交易记录（本地显示），格式化为与Account.vue一致的格式
+      const formattedPendingTrade = {
+        ...tradeData,
+        date: new Date().toLocaleDateString('zh-CN'),
+        stockName: getStockName(stockCode),
+        amount: totalPrice.value,
+        id: Date.now() + Math.random(),
+        timestamp: new Date().getTime()
+      }
+      
       const pendingTrade = addPendingTrade(tradeData)
       if (pendingTrade) {
-        pendingTrades.value.unshift(pendingTrade)
+        pendingTrades.value.unshift(formattedPendingTrade)
       }
       
       // 同时添加到交易记录（模拟立即执行）
@@ -221,6 +260,14 @@ export default {
 
 .el-table .cell {
   font-size: 14px;
+}
+
+.profit {
+  color: #67c23a;
+}
+
+.loss {
+  color: #f56c6c;
 }
 
 .el-form-item {
