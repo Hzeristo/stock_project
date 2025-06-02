@@ -448,6 +448,7 @@ export default {
 }
 
 @media (max-width: 768px) {
+<<<<<<< HEAD
   .header-content {
     padding: 0 16px;
     height: 60px;
@@ -514,6 +515,17 @@ export default {
   
   .dropdown-icon {
     display: none;
+=======
+  .datetime {
+    display: none;
+  }
+    .right-section {
+    gap: 24px; /* 在移动设备上也增加间距，但比桌面版小一些 */
+  }
+    .header-content {
+    padding: 0 16px; /* 增加移动端的左右内边距，从12px到16px */
+    height: 48px; /* 确保移动端顶栏高度与桌面端一致 */
+>>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
   }
 }
 </style>

@@ -38,6 +38,7 @@
             </template>
           </el-table-column>
         </el-table>
+<<<<<<< HEAD
       </el-tab-pane>      <!-- 交易记录 -->
       <el-tab-pane label="交易记录" name="transactions">
         <div class="transactions-header">
@@ -55,6 +56,16 @@
           <el-table-column prop="stockName" label="股票名称" align="center" />
           <el-table-column prop="stockCode" label="股票代码" align="center" width="120" />
           <el-table-column prop="type" label="交易类型" align="center" width="100">
+=======
+      </el-tab-pane>
+
+      <!-- 交易记录 -->
+      <el-tab-pane label="交易记录" name="transactions">
+        <el-table :data="transactions" style="width: 100%">
+          <el-table-column prop="date" label="交易日期" align="center" width="230" />
+          <el-table-column prop="stockName" label="股票名称" align="center" />
+          <el-table-column prop="type" label="交易类型" align="center">
+>>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
             <template #default="scope">
               <span :class="scope.row.type === '买入' ? 'profit' : 'loss'">
                 {{ scope.row.type }}
@@ -115,6 +126,7 @@
 </template>
 
 <script>
+<<<<<<< HEAD
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
@@ -125,6 +137,13 @@ export default {
   components: {
     Refresh
   },
+=======
+import { ref, reactive } from 'vue'
+import { ElMessage } from 'element-plus'
+
+export default {
+  name: 'AccountView',
+>>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
   setup() {
     const activeTab = ref('positions')
 
@@ -168,6 +187,7 @@ export default {
         currentPrice: 12.46,
         profitLoss: -2.66
       }
+<<<<<<< HEAD
     ])    // 交易记录
     const transactions = ref([])
       // 组件挂载时加载交易记录
@@ -183,6 +203,45 @@ export default {
       transactions.value = getTradeRecords()
       ElMessage.success('交易记录已刷新')
     }
+=======
+    ])
+
+    // 交易记录
+    const transactions = ref([
+      {
+        date: '2024-03-15',
+        stockName: '阿里巴巴',
+        type: '买入',
+        price: 88.50,
+        quantity: 100,
+        amount: 8850.00
+      },
+      {
+        date: '2024-03-14',
+        stockName: '腾讯控股',
+        type: '卖出',
+        price: 370.00,
+        quantity: 20,
+        amount: 7400.00
+      },
+      {
+        date: '2024-03-11',
+        stockName: '小米集团',
+        type: '买入',
+        price: 12.80,
+        quantity: 500,
+        amount: 6400.00
+      },
+      {
+        date: '2024-03-10',
+        stockName: '腾讯控股',
+        type: '买入',
+        price: 365.00,
+        quantity: 50,
+        amount: 18250.00
+      }
+    ])
+>>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
 
     // 充值表单
     const depositForm = reactive({
@@ -227,7 +286,12 @@ export default {
       }
       if (amount > accountInfo.availableFunds) {
         ElMessage.error('可用资金不足')
+<<<<<<< HEAD
         return      }
+=======
+        return
+      }
+>>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
       ElMessage.success('提现申请已提交')
       accountInfo.availableFunds -= amount
       withdrawForm.amount = ''
@@ -239,7 +303,10 @@ export default {
       accountInfo,
       positions,
       transactions,
+<<<<<<< HEAD
       refreshTransactions,
+=======
+>>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
       depositForm,
       withdrawForm,
       handleDeposit,
@@ -284,6 +351,7 @@ export default {
   margin-top: 20px;
 }
 
+<<<<<<< HEAD
 .transactions-header {
   display: flex;
   justify-content: space-between;
@@ -304,6 +372,8 @@ export default {
   margin-left: 8px;
 }
 
+=======
+>>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
 .fund-operations {
   display: flex;
   justify-content: space-between;
@@ -346,6 +416,7 @@ export default {
 .el-table {
   margin-top: 20px;
 }
+<<<<<<< HEAD
 
 /* 移动端响应式样式 */
 @media screen and (max-width: 768px) {
@@ -456,4 +527,6 @@ export default {
     display: none;
   }
 }
+=======
+>>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
 </style>
