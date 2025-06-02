@@ -117,11 +117,7 @@
           <div class="ranking-card">
             <div class="ranking-title">成交额榜</div>
             <div class="stock-list">
-<<<<<<< HEAD
               <div v-for="(stock, index) in topVolume" :key="index" class="stock-item" @click="showStockDetail(stock)">
-=======
-              <div v-for="(stock, index) in topVolume" :key="index" class="stock-item" @click="showStockDetail({...stock, change: 0})">
->>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
                 <div class="stock-info">
                   <div class="stock-name">{{ stock.name }}</div>
                   <div class="stock-code">{{ stock.code }}</div>
@@ -159,59 +155,23 @@
 </template>
 
 <script>
-<<<<<<< HEAD
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { Bell, Promotion, Refresh, Delete } from '@element-plus/icons-vue';
 import StockDetailDialog from '@/components/stock/StockDetailDialog.vue';
 import { ElMessage } from 'element-plus';
 import { getWatchlist, removeFromWatchlist } from '@/utils/stockManager';
 import { updateWatchlistPrices, getStockRealtimeData, generateStockRankingData } from '@/utils/stockDataService';
-=======
-import { ref } from 'vue';
-import { Bell, Promotion } from '@element-plus/icons-vue';
-import StockDetailDialog from '@/components/stock/StockDetailDialog.vue';
-import { ElMessage } from 'element-plus';
->>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
 
 export default {
   name: 'DashboardView',
   components: {
     Bell,
     Promotion,
-<<<<<<< HEAD
     Refresh,
     Delete,
     StockDetailDialog
   },  setup() {
     const watchlist = ref([]);
-=======
-    StockDetailDialog
-  },
-  setup() {
-    const topGainers = ref([
-      { name: '阿里巴巴', code: '9988', change: 2.3 },
-      { name: '腾讯控股', code: '0700', change: 1.8 },
-      { name: '贵州茅台', code: '600519', change: 0.9 },
-      { name: '中国平安', code: '601318', change: 0.7 },
-      { name: '招商银行', code: '600036', change: 0.5 }
-    ]);
-
-    const topLosers = ref([
-      { name: '京东集团', code: '9618', change: -1.8 },
-      { name: '美团点评', code: '3690', change: -1.5 },
-      { name: '小米集团', code: '1810', change: -1.2 },
-      { name: '中国石油', code: '601857', change: -0.9 },
-      { name: '中国工商银行', code: '601398', change: -0.6 }
-    ]);
-
-    const topVolume = ref([
-      { name: '中国平安', code: '601318', volume: '5.23亿' },
-      { name: '招商银行', code: '600036', volume: '4.86亿' },
-      { name: '阿里巴巴', code: '9988', volume: '3.42亿' },
-      { name: '腾讯控股', code: '0700', volume: '2.76亿' },
-      { name: '贵州茅台', code: '600519', volume: '1.98亿' }
-    ]);
->>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
     
     // 排行榜数据
     const topGainers = ref([]);
@@ -249,7 +209,6 @@ export default {
       watchlist.value = updateWatchlistPrices(rawWatchlist);
     };
 
-<<<<<<< HEAD
     // 加载排行榜数据
     const loadRankingData = () => {
       const rankingData = generateStockRankingData();
@@ -285,30 +244,6 @@ export default {
           pe: generatePERatio(stock.code),
           pb: generatePBRatio(stock.code),
           prevClosePrice: (parseFloat(detailData.currentPrice) - parseFloat(detailData.changeAmount)).toFixed(2)
-=======
-    // 股票详情弹窗相关
-    const stockDialogVisible = ref(false);
-    const selectedStock = ref({});
-
-    // 显示股票详情弹窗
-    const showStockDetail = async (stock) => {
-      try {
-        // 在实际应用中，这里应该调用API获取更详细的股票数据
-        // const { data } = await stockApi.getStockInfo(stock.code);
-        // selectedStock.value = { ...stock, ...data };
-        
-        // 模拟获取的数据
-        selectedStock.value = {
-          ...stock,
-          currentPrice: stock.change ? (100 + stock.change).toFixed(2) : '100.00',
-          openPrice: '101.20',
-          prevClosePrice: '100.00',
-          highPrice: '102.50',
-          lowPrice: '99.80',
-          turnover: stock.volume || '1.58亿',
-          pe: '18.5',
-          pb: '2.3'
->>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
         };
         
         stockDialogVisible.value = true;
@@ -318,7 +253,6 @@ export default {
       }
     };
 
-<<<<<<< HEAD
     // 生成市盈率（基于股票代码的稳定值）
     const generatePERatio = (stockCode) => {
       const hash = hashString(stockCode + 'pe');
@@ -342,23 +276,16 @@ export default {
       return Math.abs(hash);
     };return {
       watchlist,
-=======
-    return {
->>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
       topGainers,
       topLosers,
       topVolume,
       messages,
       stockDialogVisible,
       selectedStock,
-<<<<<<< HEAD
       showStockDetail,
       loadWatchlist,
       refreshWatchlist,
       removeFromWatchlistHandler
-=======
-      showStockDetail
->>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
     };
   }
 };

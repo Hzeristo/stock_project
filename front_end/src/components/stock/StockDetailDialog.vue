@@ -1,18 +1,9 @@
 <template>
-<<<<<<< HEAD
   <teleport to="body">    <el-dialog
       :model-value="visible"
       @update:model-value="$emit('update:visible', $event)"
       :title="stock && stock.name ? `${stock.name} (${stock.code})` : '股票详情'"
       :width="dialogWidth"
-=======
-  <teleport to="body">
-    <el-dialog
-      :model-value="visible"
-      @update:model-value="$emit('update:visible', $event)"
-      :title="stock && stock.name ? `${stock.name} (${stock.code})` : '股票详情'"
-      width="60%"
->>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
       class="stock-detail-dialog"
       :before-close="handleClose"
       append-to-body
@@ -57,7 +48,6 @@
           </div>
         </div>
         <div class="price-chart">
-<<<<<<< HEAD
           <div ref="chartDomRef" style="width: 100%; height: 100%;"></div>
         </div>
       </div>      <div class="action-section">
@@ -82,33 +72,11 @@
       :stock="stock"
       @alert-added="handleAlertAdded"
     />
-=======
-          <!-- 这里可以集成图表库，如ECharts -->
-          <div class="chart-placeholder">
-            <el-empty description="股价走势图 (可集成ECharts实现)"></el-empty>
-          </div>
-        </div>
-      </div>
-
-      <div class="action-section">
-        <el-button type="primary" class="action-button trade-button">
-          <el-icon><Sell /></el-icon>前往交易
-        </el-button>
-        <el-button class="action-button">
-          <el-icon><Bell /></el-icon>设置提醒
-        </el-button>
-        <el-button class="action-button">
-          <el-icon><Star /></el-icon>加入自选
-        </el-button>
-      </div>
-    </div>
->>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
       </el-dialog>
   </teleport>
 </template>
 
 <script>
-<<<<<<< HEAD
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { Sell, Bell, Star } from '@element-plus/icons-vue';
@@ -131,24 +99,15 @@ echarts.use([
   LineChart,
   CanvasRenderer
 ]);
-=======
-import { ref } from 'vue';
-import { Sell, Bell, Star } from '@element-plus/icons-vue';
->>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
 
 export default {
   name: 'StockDetailDialog',
   components: {
     Sell,
     Bell,
-<<<<<<< HEAD
     Star,
     StockAlertDialog
   },props: {
-=======
-    Star
-  },  props: {
->>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
     visible: {
       type: Boolean,
       required: true,
@@ -160,7 +119,6 @@ export default {
       default: () => ({})
     }
   },
-<<<<<<< HEAD
   setup(props, { emit }) {
     const router = useRouter();
     const timeRange = ref('day'); // 时间范围选择，例如 'day', 'week', 'month', 'year'
@@ -180,10 +138,6 @@ export default {
       }
       return '60%';
     });
-=======
-  setup() {
-    const timeRange = ref('day');
->>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
 
     const getTodayDate = () => {
       const today = new Date();
@@ -193,7 +147,6 @@ export default {
       return `${year}-${month}-${day}`;
     };
 
-<<<<<<< HEAD
     // 获取并更新图表数据
     const fetchChartData = async () => {
       if (!props.stock || !props.stock.code || !chartInstance) {
@@ -428,14 +381,6 @@ export default {
     };
   },
   emits: ['update:visible', 'close', 'watchlist-changed', 'alert-added'],
-=======
-    return {
-      timeRange,
-      getTodayDate
-    };
-  },
-  emits: ['update:visible', 'close'],
->>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
   methods: {
     handleClose() {
       this.$emit('update:visible', false);
@@ -598,7 +543,6 @@ export default {
   border-color: #0077ed;
 }
 
-<<<<<<< HEAD
 .in-watchlist {
   background-color: #f56c6c;
   border-color: #f56c6c;
@@ -793,24 +737,6 @@ export default {
   .action-button {
     padding: 10px 16px;
     font-size: 13px;
-=======
-@media (max-width: 768px) {
-  .stock-detail-dialog :deep(.el-dialog) {
-    width: 92% !important;
-  }
-  
-  .action-section {
-    flex-direction: column;
-    gap: 10px;
-  }
-  
-  .price {
-    font-size: 28px;
-  }
-  
-  .change {
-    font-size: 16px;
->>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
   }
 }
 </style>

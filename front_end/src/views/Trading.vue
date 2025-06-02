@@ -6,7 +6,6 @@
         <div class="card-header">
           <span>待匹配交易</span>
         </div>
-<<<<<<< HEAD
       </template>      <el-table :data="pendingTrades" stripe style="width: 100%">
         <el-table-column prop="date" label="交易日期" align="center" width="150" />
         <el-table-column prop="stockName" label="股票名称" align="center" />
@@ -21,16 +20,6 @@
         <el-table-column prop="price" label="交易价格" align="center" />
         <el-table-column prop="quantity" label="交易数量" align="center" />
         <el-table-column prop="amount" label="交易金额" align="center" />
-=======
-      </template>
-      <el-table :data="pendingTrades" stripe style="width: 100%">
-        <el-table-column prop="stockCode" label="股票代码" width="180" />
-        <el-table-column prop="type" label="交易类型" width="120" />
-        <el-table-column prop="price" label="单价（¥）" />
-        <el-table-column prop="quantity" label="数量" />
-        <el-table-column prop="totalPrice" label="总价（¥）" />
-        <el-table-column prop="time" label="提交时间" />
->>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
       </el-table>
     </el-card>
 
@@ -93,14 +82,9 @@
 </template>
 
 <script>
-<<<<<<< HEAD
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { addTradeRecord, addPendingTrade, getPendingTrades, getStockName } from '@/utils/tradeManager'
-=======
-import { ref, computed } from 'vue'
-import { ElMessage } from 'element-plus'
->>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
 
 export default {
   name: 'TradingView',
@@ -120,7 +104,6 @@ export default {
       { name: '中国平安', code: '601318.SH' }
     ])
 
-<<<<<<< HEAD
     const pendingTrades = ref([]) // 待匹配交易记录    // 组件挂载时加载待匹配交易记录
     onMounted(() => {
       const rawPendingTrades = getPendingTrades()
@@ -152,9 +135,6 @@ export default {
         }
       }
     })
-=======
-    const pendingTrades = ref([]) // 待匹配交易记录
->>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
 
     const totalPrice = computed(() => {
       const p = Number(tradeForm.value.price)
@@ -180,14 +160,8 @@ export default {
         ElMessage.error('资金账户密码错误')
         return
       }
-<<<<<<< HEAD
         // 创建交易记录对象
       const tradeData = {
-=======
-      
-      // 更新待匹配交易记录
-      const pendingTransaction = {
->>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
         stockCode,
         type: tradeForm.value.type,
         price: price.toFixed(2),
@@ -195,7 +169,6 @@ export default {
         totalPrice: totalPrice.value,
         time: new Date().toLocaleString()
       }
-<<<<<<< HEAD
       
       // 添加到待匹配交易记录（本地显示），格式化为与Account.vue一致的格式
       const formattedPendingTrade = {
@@ -221,11 +194,6 @@ export default {
         ElMessage.error('订单提交失败')
         return
       }
-=======
-      pendingTrades.value.unshift(pendingTransaction)
-
-      ElMessage.success('成功提交订单')
->>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
 
       // 清空表单数据
       resetForm()
@@ -266,11 +234,7 @@ export default {
 
 .pending-trade-card {
   margin-bottom: 40px;
-<<<<<<< HEAD
   max-width: 1200px;
-=======
-  max-width: 1200px; /* 增加待匹配交易表格的宽度 */
->>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
   margin: 0 auto;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
@@ -282,11 +246,6 @@ export default {
 
 .trading-form {
   padding: 20px;
-<<<<<<< HEAD
-=======
-
-  /* 表单整体纵向布局 + 居中 */
->>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -303,7 +262,6 @@ export default {
   font-size: 14px;
 }
 
-<<<<<<< HEAD
 .profit {
   color: #67c23a;
 }
@@ -390,14 +348,3 @@ export default {
   }
 }
 </style>
-=======
-
-.el-form-item {
-  width: 100%;
-  max-width: 400px; /* 控制每项的宽度 */
-  justify-content: center;
-}
-</style>
-
-
->>>>>>> 13c6d9d36c826dd91c3f04d952de90f7b349efbe
