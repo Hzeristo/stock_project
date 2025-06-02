@@ -10,14 +10,14 @@
     <!-- 指标卡片区域 -->
     <div class="metrics-panel">
       <div class="metric-card" style="background-color: #8a9a9e;">
-        <div class="card-header">涨停停对比</div>
+        <div class="card-header">涨跌停对比</div>
         <div class="metric-content">
           <div class="metric-value">28 : 45</div>
         </div>
       </div>
       
       <div class="metric-card" style="background-color: #b19795;">
-        <div class="card-header">昨日表现</div>
+        <div class="card-header">昨日涨停表现</div>
         <div class="metric-content">
           <div class="metric-value">0.8%</div>
         </div>
@@ -30,27 +30,64 @@
           <div class="sub-text">今日走势</div>
         </div>
       </div>
-    </div>
-
-    <!-- 股票排行榜 -->
+    </div>    <!-- 股票排行榜 -->
     <div class="stock-ranking-section">
       <div class="section-header">
         <h2>股票排行</h2>
-        <el-button type="primary" plain class="compare-btn">涨跌等待比</el-button>
       </div>
 
-      <el-row :gutter="20" class="ranking-container">
-        <!-- 涨幅榜 -->
+      <!-- 自选股区域 -->
+      <div class="watchlist-section" v-if="watchlist.length > 0">
+        <div class="section-header">
+          <h2>我的自选股</h2>
+          <el-button size="small" @click="refreshWatchlist">
+            <el-icon><Refresh /></el-icon>刷新
+          </el-button>
+        </div>
+        <div class="watchlist-card">
+          <div class="stock-list">            <div v-for="stock in watchlist" :key="stock.code" class="stock-item watchlist-item" @click="showStockDetail(stock)">
+              <div class="stock-info">
+                <div class="stock-name">{{ stock.name }}</div>
+                <div class="stock-code">{{ stock.code }}</div>
+                <div class="stock-sector" v-if="stock.sector">{{ stock.sector }}</div>
+              </div>              <div class="stock-price-info">
+                <div class="current-price">
+                  <span class="price-label">现价:</span>
+                  <span class="price-value">¥{{ stock.currentPrice || '--' }}</span>
+                </div>
+                <div v-if="stock.change !== undefined" :class="{'stock-up': stock.change > 0, 'stock-down': stock.change < 0}" class="stock-change">
+                  <span class="change-label">涨跌:</span>
+                  <span class="change-value">{{ stock.change > 0 ? '+' : '' }}{{ stock.change }}%</span>
+                </div>
+                <div class="stock-volume" v-if="stock.turnover">
+                  <span class="volume-label">成交:</span>
+                  <span class="volume-value">{{ stock.turnover }}</span>
+                </div>
+              </div>
+              <div class="stock-actions">
+                <el-button size="small" type="text" @click.stop="removeFromWatchlistHandler(stock.code)">
+                  <el-icon><Delete /></el-icon>
+                </el-button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <el-row :gutter="20" class="ranking-container">        <!-- 涨幅榜 -->
         <el-col :span="8">
           <div class="ranking-card">
             <div class="ranking-title">涨幅榜</div>
             <div class="stock-list">
-              <div v-for="(stock, index) in topGainers" :key="index" class="stock-item">
+              <div v-for="(stock, index) in topGainers" :key="index" class="stock-item" @click="showStockDetail(stock)">
                 <div class="stock-info">
                   <div class="stock-name">{{ stock.name }}</div>
                   <div class="stock-code">{{ stock.code }}</div>
                 </div>
-                <div class="stock-change stock-up">+{{ stock.change }}%</div>
+                <div class="stock-price-data">
+                  <div class="current-price">¥{{ stock.currentPrice }}</div>
+                  <div class="stock-change stock-up">+{{ stock.change }}%</div>
+                </div>
               </div>
             </div>
           </div>
@@ -61,12 +98,15 @@
           <div class="ranking-card">
             <div class="ranking-title">跌幅榜</div>
             <div class="stock-list">
-              <div v-for="(stock, index) in topLosers" :key="index" class="stock-item">
+              <div v-for="(stock, index) in topLosers" :key="index" class="stock-item" @click="showStockDetail(stock)">
                 <div class="stock-info">
                   <div class="stock-name">{{ stock.name }}</div>
                   <div class="stock-code">{{ stock.code }}</div>
                 </div>
-                <div class="stock-change stock-down">{{ stock.change }}%</div>
+                <div class="stock-price-data">
+                  <div class="current-price">¥{{ stock.currentPrice }}</div>
+                  <div class="stock-change stock-down">{{ stock.change }}%</div>
+                </div>
               </div>
             </div>
           </div>
@@ -77,12 +117,15 @@
           <div class="ranking-card">
             <div class="ranking-title">成交额榜</div>
             <div class="stock-list">
-              <div v-for="(stock, index) in topVolume" :key="index" class="stock-item">
+              <div v-for="(stock, index) in topVolume" :key="index" class="stock-item" @click="showStockDetail(stock)">
                 <div class="stock-info">
                   <div class="stock-name">{{ stock.name }}</div>
                   <div class="stock-code">{{ stock.code }}</div>
                 </div>
-                <div class="stock-volume">{{ stock.volume }}</div>
+                <div class="stock-price-data">
+                  <div class="current-price">¥{{ stock.currentPrice }}</div>
+                  <div class="stock-volume">{{ stock.volume }}</div>
+                </div>
               </div>
             </div>
           </div>
@@ -102,57 +145,147 @@
         </div>
       </div>
     </div>
+
+    <!-- 股票详情弹窗 -->
+    <stock-detail-dialog 
+      v-model:visible="stockDialogVisible" 
+      :stock="selectedStock" 
+    />
   </div>
 </template>
 
 <script>
-import { ref } from 'vue';
-import { Bell, Promotion } from '@element-plus/icons-vue';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { Bell, Promotion, Refresh, Delete } from '@element-plus/icons-vue';
+import StockDetailDialog from '@/components/stock/StockDetailDialog.vue';
+import { ElMessage } from 'element-plus';
+import { getWatchlist, removeFromWatchlist } from '@/utils/stockManager';
+import { updateWatchlistPrices, getStockRealtimeData, generateStockRankingData } from '@/utils/stockDataService';
 
 export default {
   name: 'DashboardView',
   components: {
     Bell,
-    Promotion
-  },
-  setup() {
-    const topGainers = ref([
-      { name: '阿里巴巴', code: '9988', change: 2.3 },
-      { name: '腾讯控股', code: '0700', change: 1.8 },
-      { name: '贵州茅台', code: '600519', change: 0.9 },
-      { name: '中国平安', code: '601318', change: 0.7 },
-      { name: '招商银行', code: '600036', change: 0.5 }
-    ]);
-
-    const topLosers = ref([
-      { name: '京东集团', code: '9618', change: -1.8 },
-      { name: '美团点评', code: '3690', change: -1.5 },
-      { name: '小米集团', code: '1810', change: -1.2 },
-      { name: '中国石油', code: '601857', change: -0.9 },
-      { name: '中国工商银行', code: '601398', change: -0.6 }
-    ]);
-
-    const topVolume = ref([
-      { name: '中国平安', code: '601318', volume: '5.23亿' },
-      { name: '招商银行', code: '600036', volume: '4.86亿' },
-      { name: '阿里巴巴', code: '9988', volume: '3.42亿' },
-      { name: '腾讯控股', code: '0700', volume: '2.76亿' },
-      { name: '贵州茅台', code: '600519', volume: '1.98亿' }
-    ]);
+    Promotion,
+    Refresh,
+    Delete,
+    StockDetailDialog
+  },  setup() {
+    const watchlist = ref([]);
     
-    const messages = ref([
-      'message1: 贵州茅台(600519)今日涨幅超过0.9%',
-      'message2: 市场整体表现低迷，建议关注防御性板块',
-      'message3: 近期成交量明显放大，可能存在反转信号',
-      'message4: 中国平安(601318)发布2025年第一季度财报',
-      'message5: 部分科技股估值进入合理区间，可逢低关注'
-    ]);
+    // 排行榜数据
+    const topGainers = ref([]);
+    const topLosers = ref([]);
+    const topVolume = ref([]);
+      const messages = ref([
+      '【价格提醒】贵州茅台(600519)达到设定价格1600元',
+      '【市场资讯】沪深两市成交额突破万亿，市场活跃度提升',
+      '【板块异动】银行板块集体上涨，建议关注龙头股票',
+      '【财报提醒】中国平安(601318)将于明日发布季度财报',
+      '【技术信号】上证指数突破重要阻力位，或迎来反弹行情'
+    ]);// 股票详情弹窗相关
+    const stockDialogVisible = ref(false);
+    const selectedStock = ref({});    // 组件挂载时加载自选股
+    onMounted(() => {
+      loadWatchlist();
+      loadRankingData();
+      
+      // 设置定时刷新（每30秒）
+      const refreshInterval = setInterval(() => {
+        loadWatchlist();
+        loadRankingData();
+      }, 30000);
+      
+      // 组件卸载时清除定时器
+      onBeforeUnmount(() => {
+        if (refreshInterval) {
+          clearInterval(refreshInterval);
+        }
+      });
+    });    // 加载自选股列表
+    const loadWatchlist = () => {
+      const rawWatchlist = getWatchlist();
+      // 使用稳定的价格数据服务更新价格信息
+      watchlist.value = updateWatchlistPrices(rawWatchlist);
+    };
 
-    return {
+    // 加载排行榜数据
+    const loadRankingData = () => {
+      const rankingData = generateStockRankingData();
+      topGainers.value = rankingData.topGainers;
+      topLosers.value = rankingData.topLosers;
+      topVolume.value = rankingData.topVolume;
+    };    // 刷新自选股
+    const refreshWatchlist = () => {
+      loadWatchlist();
+      loadRankingData();
+      ElMessage.success('数据已刷新');
+    };
+
+    // 从自选股中移除
+    const removeFromWatchlistHandler = (stockCode) => {
+      const success = removeFromWatchlist(stockCode);
+      if (success) {
+        loadWatchlist();
+        ElMessage.success('已移出自选股');
+      } else {
+        ElMessage.error('移出失败');
+      }
+    };    // 显示股票详情弹窗
+    const showStockDetail = async (stock) => {
+      try {
+        // 获取股票的详细实时数据
+        const detailData = getStockRealtimeData(stock.code);
+        
+        selectedStock.value = {
+          ...stock,
+          ...detailData,
+          // 补充一些详情页需要的额外信息
+          pe: generatePERatio(stock.code),
+          pb: generatePBRatio(stock.code),
+          prevClosePrice: (parseFloat(detailData.currentPrice) - parseFloat(detailData.changeAmount)).toFixed(2)
+        };
+        
+        stockDialogVisible.value = true;
+      } catch (error) {
+        console.error('获取股票详情失败:', error);
+        ElMessage.error('获取股票详情失败，请稍后再试');
+      }
+    };
+
+    // 生成市盈率（基于股票代码的稳定值）
+    const generatePERatio = (stockCode) => {
+      const hash = hashString(stockCode + 'pe');
+      return ((hash % 300 + 50) / 10).toFixed(1); // 5.0-35.0
+    };
+
+    // 生成市净率（基于股票代码的稳定值）
+    const generatePBRatio = (stockCode) => {
+      const hash = hashString(stockCode + 'pb');
+      return ((hash % 50 + 10) / 10).toFixed(1); // 1.0-6.0
+    };
+
+    // 简单的字符串哈希函数（与stockDataService中保持一致）
+    const hashString = (str) => {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      return Math.abs(hash);
+    };return {
+      watchlist,
       topGainers,
       topLosers,
       topVolume,
-      messages
+      messages,
+      stockDialogVisible,
+      selectedStock,
+      showStockDetail,
+      loadWatchlist,
+      refreshWatchlist,
+      removeFromWatchlistHandler
     };
   }
 };
@@ -269,6 +402,94 @@ export default {
   margin-top: 32px;
 }
 
+/* 自选股区域样式 */
+.watchlist-section {
+  margin-bottom: 32px;
+}
+
+.watchlist-card {
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+}
+
+.watchlist-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(-3px);
+}
+
+.watchlist-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 18px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.watchlist-item:hover {
+  background-color: rgba(64, 158, 255, 0.05);
+}
+
+.watchlist-item:last-child {
+  border-bottom: none;
+}
+
+.stock-price-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-right: 12px;
+}
+
+.current-price {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 2px;
+}
+
+.price-label, .change-label, .volume-label {
+  font-size: 12px;
+  color: #909399;
+  font-weight: 500;
+  margin-right: 4px;
+}
+
+.price-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.change-value {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.volume-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: #606266;
+}
+
+.stock-actions {
+  display: flex;
+  align-items: center;
+}
+
+.stock-actions .el-button {
+  color: #909399;
+  font-size: 16px;
+}
+
+.stock-actions .el-button:hover {
+  color: #f56c6c;
+}
+
 .section-header {
   display: flex;
   justify-content: space-between;
@@ -334,13 +555,14 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 18px;
-  border-bottom: 1px solid #f5f7fa;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   transition: background-color 0.2s ease;
+  cursor: pointer;
 }
 
 .stock-item:hover {
-  background-color: rgba(0, 0, 0, 0.01);
+  background-color: rgba(64, 158, 255, 0.05);
 }
 
 .stock-item:last-child {
@@ -362,6 +584,17 @@ export default {
 .stock-code {
   font-size: 13px;
   color: #909399;
+  font-weight: 500;
+}
+
+.stock-sector {
+  font-size: 12px;
+  color: #606266;
+  background-color: #f0f2f5;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 4px;
+  display: inline-block;
   font-weight: 500;
 }
 
@@ -437,25 +670,241 @@ export default {
   line-height: 1.4;
 }
 
+/* 排行榜价格数据样式 */
+.stock-price-data {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  min-width: 80px;
+}
+
+.current-price {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 2px;
+}
+
+/* 优化排行榜股票项目布局 */
+.ranking-card .stock-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.ranking-card .stock-item:hover {
+  background-color: rgba(64, 158, 255, 0.05);
+}
+
+.ranking-card .stock-item:last-child {
+  border-bottom: none;
+}
+
 @media (max-width: 768px) {
+  .dashboard {
+    padding: 16px 12px;
+  }
+
+  .nav-tabs {
+    margin-bottom: 16px;
+  }
+
+  .tab-item {
+    padding: 10px 12px;
+    margin-right: 16px;
+    font-size: 14px;
+  }
+
   .metrics-panel {
     flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
   }
-  
+
+  .metric-card {
+    border-radius: 12px;
+  }
+
+  .card-header {
+    padding: 14px 16px;
+    font-size: 15px;
+  }
+
+  .metric-content {
+    padding: 20px 16px;
+  }
+
+  .metric-value {
+    font-size: 24px;
+  }
+
+  .section-header h2 {
+    font-size: 18px;
+  }
+
   .ranking-container {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
   }
-  
+
   .ranking-card {
-    margin-bottom: 20px;
+    margin-bottom: 0;
   }
-  
+
+  .ranking-title {
+    padding: 14px 16px;
+    font-size: 15px;
+  }
+
+  .stock-item {
+    padding: 12px 16px;
+  }
+
+  .stock-name {
+    font-size: 14px;
+  }
+
+  .stock-code {
+    font-size: 12px;
+  }
+
+  .stock-change {
+    font-size: 14px;
+    padding: 3px 6px;
+  }
+
+  .message-item {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .message-text {
+    font-size: 13px;
+  }
   .el-col {
     width: 100% !important;
     flex: 0 0 100%;
     max-width: 100%;
+  }
+
+  .watchlist-section {
+    margin-bottom: 24px;
+  }
+
+  .watchlist-item {
+    padding: 12px 16px;
+  }
+
+  .current-price {
+    font-size: 14px;
+  }
+
+  .stock-actions .el-button {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard {
+    padding: 12px 8px;
+  }
+
+  .nav-tabs {
+    margin-bottom: 12px;
+    padding-bottom: 4px;
+  }
+
+  .tab-item {
+    padding: 8px 10px;
+    margin-right: 12px;
+    font-size: 13px;
+    gap: 6px;
+  }
+
+  .metrics-panel {
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .card-header {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .metric-content {
+    padding: 16px 14px;
+  }
+
+  .metric-value {
+    font-size: 20px;
+  }
+
+  .sub-text {
+    font-size: 12px;
+  }
+
+  .section-header {
+    margin-bottom: 16px;
+  }
+
+  .section-header h2 {
+    font-size: 16px;
+  }
+
+  .ranking-container {
+    gap: 12px;
+  }
+
+  .ranking-title {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .stock-item {
+    padding: 10px 14px;
+  }
+
+  .stock-name {
+    font-size: 13px;
+    margin-bottom: 2px;
+  }
+
+  .stock-code {
+    font-size: 11px;
+  }
+
+  .stock-change {
+    font-size: 13px;
+    padding: 2px 5px;
+  }
+
+  .stock-volume {
+    font-size: 13px;
+    padding: 2px 5px;
+  }
+
+  .messages-section {
+    margin-top: 24px;
+  }
+
+  .message-item {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .message-item .el-icon {
+    padding: 6px;
+  }
+
+  .message-text {
+    font-size: 12px;
+    line-height: 1.3;
   }
 }
 </style>
